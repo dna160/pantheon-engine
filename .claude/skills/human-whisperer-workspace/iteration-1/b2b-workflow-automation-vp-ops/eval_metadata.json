@@ -1,0 +1,14 @@
+{
+  "eval_id": 1,
+  "eval_name": "b2b-workflow-automation-vp-ops",
+  "prompt": "I need to prep for a meeting with Marcus Chen, VP Operations at Meridian Logistics...[full prompt in evals.json]",
+  "assertions": [
+    {"text": "Produces a .docx file named with Marcus or Chen and ConversationPrep and today's date", "passed": null, "evidence": ""},
+    {"text": "Sanity check runs and returns TRUE FIT or PARTIAL FIT (not NO FIT) since FlowOS directly addresses manual reporting", "passed": null, "evidence": ""},
+    {"text": "At least 10 probe questions are present, each with Q[N], PURPOSE, DEPTH LEVEL, OPEN FOLLOW-UP, BACK-OUT, and GENOME LINK fields", "passed": null, "evidence": ""},
+    {"text": "Opening stage does not begin with 'I' and references something specific from Marcus's genome", "passed": null, "evidence": ""},
+    {"text": "Banned phrases (leverage, synergy, ecosystem, holistic, best-in-class, world-class) do not appear in the document", "passed": null, "evidence": ""},
+    {"text": "Honest limitation section acknowledges FlowOS does not do predictive analytics or demand forecasting", "passed": null, "evidence": ""},
+    {"text": "Plain language brief is present (1 paragraph, no jargon)", "passed": null, "evidence": ""}
+  ]
+}

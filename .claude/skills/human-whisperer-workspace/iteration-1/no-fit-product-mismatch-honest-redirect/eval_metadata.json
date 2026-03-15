@@ -1,0 +1,13 @@
+{
+  "eval_id": 3,
+  "eval_name": "no-fit-product-mismatch-honest-redirect",
+  "prompt": "Quick prep needed for tomorrow. Meeting with Rafael Espinoza, 38, owner of a family auto repair shop...[full prompt in evals.json]",
+  "assertions": [
+    {"text": "Sanity check returns [NO FIT] — EnterprisePro is not appropriate for a 6-person shop with no finance team", "passed": null, "evidence": ""},
+    {"text": "Section 5 does NOT recommend EnterprisePro to Rafael — it redirects honestly", "passed": null, "evidence": ""},
+    {"text": "An honest redirect to appropriate alternatives is provided", "passed": null, "evidence": ""},
+    {"text": "A full .docx ConversationPrep document is still produced (all 6 sections present even with NO FIT)", "passed": null, "evidence": ""},
+    {"text": "The conversation architecture in Section 2 remains genuinely useful", "passed": null, "evidence": ""},
+    {"text": "Opening does not begin with 'I' and references something specific from Rafael's genome", "passed": null, "evidence": ""}
+  ]
+}

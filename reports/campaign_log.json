@@ -1,0 +1,34 @@
+[
+  {
+    "timestamp": "2026-03-09T22:31:26",
+    "client": "Karya Photo",
+    "client_folder": "Karya_Photo",
+    "target": "Medanese Upper Middle Class, 25-45",
+    "brief_snippet": "Gemini said\n[CAMP_ID: WARISAN — Karya Photo & Bridal Centre]\n[VERSION: v1.0] [DATE: 202603] [COMPACTED BY: Pantheon v1]\n\n§1 - CORE DIRECTIVE\nOBJ*: Establish Karya as the authoritative studio for legacy and inherited wedding photography in Medan.\nCOMM_OBJ: Shift the purchase decision from a trendy ae",
+    "elapsed": 624.5,
+    "success": true,
+    "output_base_name": "PANTHEON_REPORT_Karya_Photo_v1",
+    "files": {
+      "docx": "C:\\Users\\johns\\Documents\\Antigravity\\pantheon-app\\reports\\Karya_Photo\\PANTHEON_REPORT_Karya_Photo_v1.docx",
+      "md": "C:\\Users\\johns\\Documents\\Antigravity\\pantheon-app\\reports\\Karya_Photo\\PANTHEON_REPORT_Karya_Photo_v1.md",
+      "pptx": "C:\\Users\\johns\\Documents\\Antigravity\\pantheon-app\\reports\\Karya_Photo\\PANTHEON_REPORT_Karya_Photo_v1.pptx",
+      "whisperer": "C:\\Users\\johns\\Documents\\Antigravity\\pantheon-app\\reports\\Karya_Photo\\PANTHEON_REPORT_Karya_Photo_v1_ClientWhisperer_KaryaPhoto_20260309.docx"
+    }
+  },
+  {
+    "timestamp": "2026-03-07T13:07:10",
+    "client": "Boost",
+    "client_folder": "Boost",
+    "target": "Vietnamese Metropolitan 21-35|Singapore Metropolitan 21-35",
+    "brief_snippet": "Gemini said\n[CAMP_ID: Boost — The Urban Pulse]\n[VERSION: v1] [DATE: 20260304] [COMPACTED BY: Compactor v1]\n\n§1 — CORE DIRECTIVE\nOBJ*: Position Boost as essential, functional nutrition for high-performance urban lifestyles.\nCOMM_OBJ: Shift perception from standard juice to an indispensable productivi",
+    "elapsed": 432.9,
+    "success": true,
+    "output_base_name": "PANTHEON_REPORT_Boost_v2",
+    "files": {
+      "docx": "C:\\Users\\johns\\Documents\\Antigravity\\pantheon-app\\reports\\Boost\\PANTHEON_REPORT_Boost_v2.docx",
+      "md": "C:\\Users\\johns\\Documents\\Antigravity\\pantheon-app\\reports\\Boost\\PANTHEON_REPORT_Boost_v2.md",
+      "pptx": "C:\\Users\\johns\\Documents\\Antigravity\\pantheon-app\\reports\\Boost\\PANTHEON_REPORT_Boost_v2.pptx",
+      "whisperer": "C:\\Users\\johns\\Documents\\Antigravity\\pantheon-app\\reports\\Boost\\PANTHEON_REPORT_Boost_v2_ClientWhisperer_Boost_20260307.docx"
+    }
+  }
+]

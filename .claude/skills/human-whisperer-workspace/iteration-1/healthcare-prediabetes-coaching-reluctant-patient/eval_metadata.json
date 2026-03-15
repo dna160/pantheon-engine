@@ -1,0 +1,14 @@
+{
+  "eval_id": 2,
+  "eval_name": "healthcare-prediabetes-coaching-reluctant-patient",
+  "prompt": "I'm a health coach at ClearPath Wellness. I have a first consult tomorrow with Sandra Okafor...[full prompt in evals.json]",
+  "assertions": [
+    {"text": "Produces a .docx file named with Sandra or Okafor and ConversationPrep", "passed": null, "evidence": ""},
+    {"text": "Sanity check is present and acknowledges the cost sensitivity as a partial fit concern", "passed": null, "evidence": ""},
+    {"text": "Section 1 Human Snapshot contains no clinical jargon — plain language throughout", "passed": null, "evidence": ""},
+    {"text": "Probe questions include at least 2 that address previous attempts gently (not making her feel like a failure)", "passed": null, "evidence": ""},
+    {"text": "Reframe section addresses the food-as-culture identity stake", "passed": null, "evidence": ""},
+    {"text": "CTA ladder is used at Readiness 2 or 3 (not a hard sell on the program at first consult)", "passed": null, "evidence": ""},
+    {"text": "Plain language brief present and readable by someone with no psychology background", "passed": null, "evidence": ""}
+  ]
+}

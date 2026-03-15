@@ -1,0 +1,17 @@
+{
+  "version": "0.0.1",
+  "configurations": [
+    {
+      "name": "whisperer-dashboard",
+      "runtimeExecutable": "D:/Claude Home/venus-app/.venv/Scripts/streamlit",
+      "runtimeArgs": ["run", "whisperer_dashboard.py", "--server.port", "8503", "--server.headless", "true"],
+      "port": 8503
+    },
+    {
+      "name": "pantheon-dashboard",
+      "runtimeExecutable": "D:/Claude Home/venus-app/.venv/Scripts/streamlit",
+      "runtimeArgs": ["run", "dashboard.py", "--server.port", "8502", "--server.headless", "true"],
+      "port": 8502
+    }
+  ]
+}

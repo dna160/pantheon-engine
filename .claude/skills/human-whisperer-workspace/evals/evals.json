@@ -1,0 +1,112 @@
+{
+  "skill_name": "human-whisperer",
+  "evals": [
+    {
+      "id": 1,
+      "eval_name": "b2b-workflow-automation-vp-ops",
+      "prompt": "I need to prep for a meeting with Marcus Chen, VP Operations at Meridian Logistics (mid-market, ~400 employees, been a customer for 8 months). We're pitching FlowOS — our AI workflow automation platform. Here's his PANTHEON genome output:\n\nPERSONALITY GENOME — Marcus Chen\nOpenness: 58 | Conscientiousness: 91 | Extraversion: 41 | Agreeableness: 52 | Neuroticism: 67\n\nLIFE LAYERS:\n- ECONOMIC: Upper-middle, financially cautious, bonus-driven, resists discretionary spend without clear ROI\n- SOCIAL: Tight circle, doesn't trust vendors easily, values peer validation (respects other VPs more than sales reps)\n- PSYCHOLOGICAL: High control need, fears being blamed for failed initiatives, deeply risk-averse, hides uncertainty with data requests\n- CULTURAL: Taiwanese-American, second generation, strong work ethic identity, equates busyness with worth\n- SPIRITUAL: Secular, skeptical, evidence-based decision-making\n\nVOICE_PRINT: Formal in writing, direct in person, uses operational/process language, gets uncomfortable with emotional framing\nMUTATION_LOG: Has been burned by a CRM implementation failure 2 years ago; now insists on 'proof of concept before commitment'\n\nSURFACE PAIN (from discovery call notes): 'My team spends too much time on manual reporting. I need to free them up.'\n\nFlowOS brief: AI-powered workflow automation. Eliminates manual reporting via integrations with existing tools (Salesforce, SAP, Excel). Reduces ops team admin time by avg 40%. ROI typically visible within 60 days. Does NOT do predictive analytics or demand forecasting — that's a separate product.\n\nConversation type: retention + expansion pitch\n\nPlease build me a full conversation prep doc.",
+      "expected_output": "A complete .docx ConversationPrep document with all 6 sections, a sanity check summary showing TRUE FIT or PARTIAL FIT (FlowOS directly addresses manual reporting pain), and a plain language brief. The document should: (1) never use banned phrases like 'leverage' or 'synergy', (2) include minimum 10 probe questions in proper format with all 6 fields, (3) open with a non-'I' observation referencing Marcus's operational identity, (4) acknowledge the CRM failure context without making him feel bad about it, (5) be honest that FlowOS doesn't do predictive analytics.",
+      "files": [],
+      "assertions": [
+        {
+          "text": "Produces a .docx file named with Marcus or Chen and ConversationPrep and today's date",
+          "type": "file_exists"
+        },
+        {
+          "text": "Sanity check runs and returns TRUE FIT or PARTIAL FIT (not NO FIT) since FlowOS directly addresses manual reporting",
+          "type": "content_check"
+        },
+        {
+          "text": "At least 10 probe questions are present, each with Q[N], PURPOSE, DEPTH LEVEL, OPEN FOLLOW-UP, BACK-OUT, and GENOME LINK fields",
+          "type": "content_check"
+        },
+        {
+          "text": "Opening stage does not begin with 'I' and references something specific from Marcus's genome (control need, operational identity, or CRM failure)",
+          "type": "content_check"
+        },
+        {
+          "text": "Banned phrases (leverage, synergy, ecosystem, holistic, best-in-class, world-class) do not appear in the document",
+          "type": "content_check"
+        },
+        {
+          "text": "Honest limitation section acknowledges FlowOS does not do predictive analytics or demand forecasting",
+          "type": "content_check"
+        },
+        {
+          "text": "Plain language brief is present (1 paragraph, no jargon)",
+          "type": "content_check"
+        }
+      ]
+    },
+    {
+      "id": 2,
+      "eval_name": "healthcare-prediabetes-coaching-reluctant-patient",
+      "prompt": "I'm a health coach at ClearPath Wellness. I have a first consult tomorrow with Sandra Okafor, 54, recently diagnosed with prediabetes by her GP who referred her to us. Sandra filled in our intake form — here's what we got plus her PANTHEON profile from the intake data.\n\nPANTHEON GENOME — Sandra Okafor\nOpenness: 44 | Conscientiousness: 62 | Extraversion: 55 | Agreeableness: 79 | Neuroticism: 74\n\nLIFE LAYERS:\n- ECONOMIC: Working class, tight budget, single income household, very cost-sensitive, views 'wellness' as a luxury\n- SOCIAL: Large family network, strong opinions from sisters and mother about health, food is deeply cultural (Nigerian-British), cooking is an expression of love\n- PSYCHOLOGICAL: People-pleaser, says yes to the room, will agree to a plan she won't actually follow, high shame around body and health, equates failing a diet with being a bad mother\n- CULTURAL: Nigerian-British, first generation, deep faith (Anglican), food and community are inseparable, distrusts clinical language\n- SPIRITUAL: Faith-driven, God's plan framing helps her make peace with hard things\n\nINTAKE NOTES: 'I know I need to make changes. I've tried before but it never sticks. I just want to be healthy for my kids.' Previous attempts: 3 diets (Weight Watchers twice, a Nigerian meal plan app that 'didn't understand her food'). All abandoned within 6 weeks.\n\nClearPath offering: 12-week personalized lifestyle coaching program — nutrition, movement, and behaviour change. £85/month. Flexible meal frameworks (not rigid meal plans). No food bans. Video check-ins 2x/week. Community group included.\n\nConversation type: first clinical consult / discovery\n\nBuild me the full human whisperer conversation prep doc for Sandra's appointment tomorrow.",
+      "expected_output": "A complete .docx ConversationPrep document for Sandra with all 6 sections. Should: (1) run sanity check — ClearPath is a TRUE or PARTIAL FIT (flexible approach may partially address her budget/cultural concerns), (2) Section 1 Human Snapshot should use plain language not clinical terms, (3) probe questions should gently surface shame around previous failures without triggering defensiveness, (4) the reframe should address 'I can't stick to a diet' by reframing it as 'diets weren't designed for your food or your life', (5) CTA should match her low-medium readiness (she said yes to the GP referral but hasn't committed money yet), (6) plain language brief should help a new coach walking in cold to understand Sandra in 60 seconds.",
+      "files": [],
+      "assertions": [
+        {
+          "text": "Produces a .docx file named with Sandra or Okafor and ConversationPrep",
+          "type": "file_exists"
+        },
+        {
+          "text": "Sanity check is present and acknowledges the cost sensitivity as a partial fit concern",
+          "type": "content_check"
+        },
+        {
+          "text": "Section 1 Human Snapshot contains no clinical jargon — plain language throughout",
+          "type": "content_check"
+        },
+        {
+          "text": "Probe questions include at least 2 that address previous attempts gently (not making her feel like a failure)",
+          "type": "content_check"
+        },
+        {
+          "text": "Reframe section addresses the food-as-culture identity stake — not just 'diet failed' but 'wrong tool for your world'",
+          "type": "content_check"
+        },
+        {
+          "text": "CTA ladder is used at Readiness 2 or 3 (not a hard sell on the £85/month program at first consult)",
+          "type": "content_check"
+        },
+        {
+          "text": "Plain language brief present and readable by someone with no psychology background",
+          "type": "content_check"
+        }
+      ]
+    },
+    {
+      "id": 3,
+      "eval_name": "no-fit-product-mismatch-honest-redirect",
+      "prompt": "Quick prep needed for tomorrow. Meeting with Rafael Espinoza, 38, owner of a family auto repair shop in Houston (3 bays, 6 employees, been open 11 years). His daughter filled out a PANTHEON survey for him as part of a small biz outreach program.\n\nPANTHEON GENOME — Rafael Espinoza\nOpenness: 37 | Conscientiousness: 85 | Extraversion: 63 | Agreeableness: 71 | Neuroticism: 58\n\nLIFE LAYERS:\n- ECONOMIC: Cash-flow focused, pays everything on time, distrusts debt, has never taken a business loan, keeps books in a notebook, doesn't use accounting software\n- SOCIAL: Deep community roots, gets most business from neighbors and word of mouth, reputation is everything, church community is core to his identity\n- PSYCHOLOGICAL: Proud of self-reliance, equates asking for help with failure, secretly worried the business won't survive without him (key-man risk), hasn't taken a real vacation in 4 years\n- CULTURAL: Mexican-American, second generation, deeply proud of what his family built, business is his legacy\n- SPIRITUAL: Catholic, strong moral framework, hates feeling like he's being 'sold to'\n\nREAL PAIN (from survey notes): He doesn't know where his money actually goes. Revenue is up but cash feels tight every month. He suspects he's underpricing labor but doesn't know by how much.\n\nProduct we're selling: EnterprisePro — a $3,200/year AI-powered enterprise financial analytics platform built for businesses with $50M+ revenue, complex multi-entity structures, and dedicated finance teams.\n\nConversation type: outbound sales call (cold)\n\nBuild me the conversation prep doc.",
+      "expected_output": "This is a NO FIT scenario — EnterprisePro is built for $50M+ enterprises and Rafael runs a 6-person repair shop. The sanity check should clearly return [✗ NO FIT]. The document should still be built (all 6 sections), but Section 5 must NOT recommend EnterprisePro. Instead, it should provide an honest redirect to what Rafael actually needs (likely a small business bookkeeping tool like Wave or QuickBooks, or a local accountant). The conversation architecture should still be valuable — helping the practitioner understand Rafael well enough to have an honest conversation and potentially refer him correctly. The plain language brief should be clear about the mismatch.",
+      "files": [],
+      "assertions": [
+        {
+          "text": "Sanity check returns [✗ NO FIT] — EnterprisePro is not appropriate for a 6-person shop with no finance team",
+          "type": "content_check"
+        },
+        {
+          "text": "Section 5 does NOT recommend EnterprisePro to Rafael — it redirects honestly",
+          "type": "content_check"
+        },
+        {
+          "text": "An honest redirect to appropriate alternatives is provided (small business tools, local accountant, or similar)",
+          "type": "content_check"
+        },
+        {
+          "text": "A full .docx ConversationPrep document is still produced (all 6 sections present even with NO FIT)",
+          "type": "file_exists"
+        },
+        {
+          "text": "The conversation architecture in Section 2 remains genuinely useful — helps practitioner approach Rafael respectfully",
+          "type": "content_check"
+        },
+        {
+          "text": "Opening does not begin with 'I' and references something specific from Rafael's genome",
+          "type": "content_check"
+        }
+      ]
+    }
+  ]
+}
