@@ -1,0 +1,10 @@
+modal
+supabase
+anthropic
+pydantic
+python-dotenv
+apify-client
+requests
+python-docx
+streamlit
+PyPDF2
