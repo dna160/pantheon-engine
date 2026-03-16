@@ -380,4 +380,43 @@ Rationale: the old name leaked the internal "navigation not script" meta-instruc
 - Talking points always live in the right column — they are companion content to the stage blueprint, not a standalone module
 - The Kartu Cepat (HOOK / STAY / CLOSE) always renders full-width *above* the download button — it is the practitioner's last thing they read before walking in
 - `_render_quick_brief` stays as a wrapper — do not delete it, other callers may use it
-- All AI-generated content in Bahasa Indonesia — natural conversational register, not kata baku
+---
+
+## Codebase Refactor and Modularization — March 2026
+
+### 1. Architectural Reorganization
+The codebase was restructured from a flat architecture into a modular, directory-based system to improve maintainability and scalability.
+
+| Directory | Purpose |
+|-----------|---------|
+| `src/` | Core business logic, pipeline nodes, and modularized engines |
+| `src/nodes/` | Individual pipeline node logic (Nodes 2–5) |
+| `ui/` | Streamlit dashboards and UI-related logic |
+| `scripts/` | Database initialization, seeding, and management scripts |
+| `tests/` | Unit and integration testing suites |
+| `docs/` | Project documentation and SQL schemas |
+
+### 2. Modular Engine Extraction
+The monolithic `main.py` was decomposed into a lean orchestrator by extracting core logic into dedicated modules:
+
+- **Genesis Engine (`src/genesis.py`)**: All agent generation, seed templates, and nature vs. nurture mutation logic.
+- **Semantic Router (`src/semantic_router.py`)**: Smart demographic matching and PTM/STM evaluation.
+- **Pipeline Nodes (`src/nodes/`)**: Node-specific logic (Snapshots, Mass Sessions, Breakout Rooms, Synthesis) isolated for testing and clarity.
+- **Presentation & Whisperer (`src/presentation.py`, `src/whisperer.py`)**: PPTX generation and client meeting prep documentation logic.
+- **Shared Utils (`src/utils.py`)**: Global constants, agent context builders, and cross-node reporting logic.
+
+### 3. Orchestration Layer (`main.py`)
+`main.py` now serves strictly as the execution orchestrator:
+- Defines the `modal.App` and image configuration.
+- Maps Modal functions to modular logic in `src/`.
+- Orchestrates the sequential flow from Intake (Node 1) through to Whisperer (Node 7).
+- Provides a clean `api_run_pipeline` entry point for web integrations.
+
+### 4. Configuration Consolidation
+- **Consolidated Environment**: Redundant `pantheon.env` was merged into a single source-of-truth `.env` file.
+- **Import Standardization**: All components now use standardized relative and absolute imports based on the root directory.
+
+### Design Principles (Refactor)
+- **Separation of Concerns**: Logic (src), Interface (ui), and Orchestration (main.py) are strictly decoupled.
+- **Path Portability**: Scripts and UI files use dynamic path resolution to find core modules regardless of execution context.
+- **Testability**: Individual nodes in `src/nodes/` can now be unit-tested without loading the entire Modal app.

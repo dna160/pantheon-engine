@@ -2,7 +2,7 @@ import os
 from dotenv import load_dotenv
 from supabase import create_client
 
-load_dotenv('pantheon.env', override=True)
+load_dotenv('.env', override=True)
 
 SUPABASE_URL = os.getenv("SUPABASE_URL")
 SUPABASE_KEY = os.getenv("SUPABASE_SERVICE_ROLE_KEY")
@@ -144,6 +144,26 @@ CREATE INDEX IF NOT EXISTS idx_whisper_runs_created_at ON whisper_runs(created_a
 CREATE INDEX IF NOT EXISTS idx_whisper_runs_prospect   ON whisper_runs(prospect_name);
 """
 
+# ─────────────────────────────────────────────────────────────────────────────
+# USERS TABLE (Authentication & Credit System)
+# Run in Supabase SQL Editor to create this table.
+# ─────────────────────────────────────────────────────────────────────────────
+SQL_USERS = """
+CREATE EXTENSION IF NOT EXISTS "uuid-ossp";
+
+CREATE TABLE IF NOT EXISTS users (
+    id                UUID        PRIMARY KEY DEFAULT uuid_generate_v4(),
+    username          VARCHAR     UNIQUE NOT NULL,
+    password_hash     VARCHAR     NOT NULL,
+    role              VARCHAR     DEFAULT 'user', -- 'user' or 'superadmin'
+    pantheon_credits  INT         DEFAULT 0,
+    whisperer_credits INT         DEFAULT 0,
+    created_at        TIMESTAMP   DEFAULT now()
+);
+
+CREATE INDEX IF NOT EXISTS idx_users_username ON users(username);
+"""
+
 
 if __name__ == "__main__":
     if not SUPABASE_URL or not SUPABASE_KEY:
@@ -166,4 +186,7 @@ if __name__ == "__main__":
     print()
     print("── OPTION C: Client Whisperer run history (whisper_runs table) ─────────────")
     print(SQL_WHISPER_RUNS)
+    print()
+    print("── OPTION D: Users table (Authentication & Credits) ────────────────────────")
+    print(SQL_USERS)
     print("=" * 80)

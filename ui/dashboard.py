@@ -1,4 +1,4 @@
-﻿"""
+"""
 dashboard.py — PANTHEON Market Research Intelligence Dashboard
 Run with:  streamlit run dashboard.py
 """
@@ -219,7 +219,7 @@ def extract_text_from_file(uploaded_file) -> str:
 # Pipeline runner — calls `modal run main.py` as a subprocess, streams stdout
 # ─────────────────────────────────────────────────────────────────────────────
 
-MAIN_PY = Path(__file__).parent / "main.py"
+MAIN_PY = Path(__file__).parent.parent / "main.py"
 VENV_PYTHON = Path("D:/Pantheon/venv/Scripts/python.exe")
 PYTHON = str(VENV_PYTHON) if VENV_PYTHON.exists() else sys.executable
 

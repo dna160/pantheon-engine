@@ -5,7 +5,13 @@ import re
 import streamlit as st
 from dotenv import load_dotenv
 
-load_dotenv("pantheon.env", override=True)
+import sys
+from pathlib import Path
+
+# Ensure we can find 'client_whisperer' at the root
+sys.path.append(str(Path(__file__).parent.parent))
+
+load_dotenv(".env", override=True)
 
 def _clean_html(html_str):
     return re.sub(r'^[ \t]+', '', html_str, flags=re.MULTILINE)

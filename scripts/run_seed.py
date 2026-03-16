@@ -12,8 +12,8 @@ import sys
 # Force UTF-8 stdout so box-drawing chars in main.py prints don't crash
 sys.stdout = io.TextIOWrapper(sys.stdout.buffer, encoding="utf-8", errors="replace")
 
-# Ensure the pantheon-app directory is on the path so main.py imports work
-sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
+# Ensure the root directory is on the path
+sys.path.insert(0, str(Path(__file__).parent.parent))
 
 from dotenv import load_dotenv
 from supabase import create_client
@@ -41,7 +41,7 @@ _VIETNAMESE_SEED_TEMPLATES = [
     "suspicious of flashy marketing, relies on close peer recommendations for big purchases."
 ]
 
-load_dotenv("pantheon.env", override=True)
+load_dotenv(".env", override=True)
 url     = os.environ["SUPABASE_URL"]
 key     = os.environ["SUPABASE_SERVICE_ROLE_KEY"]
 api_key = os.environ["ANTHROPIC_API_KEY"]
@@ -49,8 +49,8 @@ api_key = os.environ["ANTHROPIC_API_KEY"]
 sb     = create_client(url, key)
 client = anthropic.Anthropic(api_key=api_key)
 
-# Import the Genesis engine from main.py
-from main import dynamic_seed_agents
+# Import the Genesis engine from src/genesis.py
+from src.genesis import dynamic_seed_agents
 
 print("\n" + "=" * 60)
 print("  PANTHEON Genesis -- Standalone Seed Run")
