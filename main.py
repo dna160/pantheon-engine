@@ -54,10 +54,48 @@ def fastapi_app():
         limit: int = 10
         group_size: int = 5
 
+    class SeedRequest(BaseModel):
+        demographic: str
+        count: int = 10
+        age_min: int = 25
+        age_max: int = 45
+
     @web_app.post("/run_pipeline")
     def api_run_pipeline(req: PipelineRequest):
         return run_pipeline_core(req.target, req.brief, client=req.client, limit=req.limit, group_size=req.group_size)
-    
+
+    @web_app.post("/seed")
+    def api_seed(req: SeedRequest):
+        from supabase import create_client
+        import anthropic as _anthropic
+        import traceback
+        try:
+            sb = create_client(os.environ["SUPABASE_URL"], os.environ["SUPABASE_SERVICE_ROLE_KEY"])
+            ac = _anthropic.Anthropic(api_key=os.environ["ANTHROPIC_API_KEY"])
+            agents = dynamic_seed_agents(req.demographic, req.count, sb, ac)
+            return {"seeded": len(agents), "demographic": req.demographic, "agents": agents}
+        except Exception as e:
+            return {"error": str(e), "trace": traceback.format_exc()}
+
+    @web_app.get("/agents")
+    def api_agents(demographic: str = "", limit: int = 50):
+        from supabase import create_client
+        sb = create_client(os.environ["SUPABASE_URL"], os.environ["SUPABASE_SERVICE_ROLE_KEY"])
+        q = sb.table("agent_genomes").select(
+            "id,target_demographic,age,ethnicity,current_religion,religiosity,"
+            "openness,conscientiousness,extraversion,agreeableness,neuroticism,"
+            "communication_style,decision_making,identity_fusion,chronesthesia_capacity,"
+            "tom_self_awareness,tom_social_modeling,executive_flexibility,"
+            "cumulative_cultural_capacity,persona_narrative,"
+            "cultural_primary,cultural_secondary,partner_culture,"
+            "origin_layer,created_at",
+            count="exact"
+        )
+        if demographic:
+            q = q.ilike("target_demographic", f"%{demographic}%")
+        result = q.order("created_at", desc=True).limit(limit).execute()
+        return {"total": result.count, "agents": result.data}
+
     return web_app
 
 def node1_intake_and_query(target_demographic: str, limit: int = 10) -> list[dict]:

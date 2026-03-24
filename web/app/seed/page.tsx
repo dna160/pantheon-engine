@@ -22,6 +22,11 @@ interface Agent {
   tom_self_awareness: number;
   tom_social_modeling: number;
   executive_flexibility: number;
+  cumulative_cultural_capacity: number;
+  persona_narrative?: string;
+  cultural_primary?: string;
+  cultural_secondary?: string;
+  partner_culture?: string;
   origin_layer: { summary?: string } | string | null;
   created_at: string;
 }
@@ -125,14 +130,43 @@ function AgentCard({ agent, isNew }: { agent: Agent; isNew: boolean }) {
       {/* Expanded traits */}
       {expanded && (
         <div className="mt-4 pt-4 border-t border-[#1e1e30] space-y-2">
+
+          {/* Persona Narrative */}
+          {agent.persona_narrative && (
+            <div className="mb-4 p-3 rounded-lg bg-[#0a0a0f] border border-[#7b61ff]/20">
+              <p className="text-[10px] font-semibold text-[#7b61ff] uppercase tracking-widest mb-1.5">Persona</p>
+              <p className="text-[11px] text-[#ccccdd] leading-relaxed">{agent.persona_narrative}</p>
+            </div>
+          )}
+
+          {/* Cultural Identity */}
+          {(agent.cultural_primary || agent.cultural_secondary || agent.partner_culture) && (
+            <div className="mb-4 space-y-1.5">
+              <p className="text-[10px] font-semibold text-[#f59e0b] uppercase tracking-widest mb-1.5">Cultural Identity</p>
+              {agent.cultural_primary && (
+                <p className="text-[11px] text-[#ccccdd]"><span className="text-[#8888aa]">Primary: </span>{agent.cultural_primary}</p>
+              )}
+              {agent.cultural_secondary && agent.cultural_secondary !== "None" && (
+                <p className="text-[11px] text-[#ccccdd]"><span className="text-[#8888aa]">Secondary: </span>{agent.cultural_secondary}</p>
+              )}
+              {agent.partner_culture && (
+                <p className="text-[11px] text-[#ccccdd]"><span className="text-[#8888aa]">Partner: </span>{agent.partner_culture}</p>
+              )}
+            </div>
+          )}
+
+          {/* PANTHEON Cognitive Dimensions */}
           <p className="text-[11px] font-semibold text-[#7b61ff] uppercase tracking-widest mb-3">
-            Cognitive Architecture
+            PANTHEON Cognitive Dimensions
           </p>
+          <TraitBar label="Cultural Capacity" value={agent.cumulative_cultural_capacity ?? 0} />
           <TraitBar label="Identity Fusion" value={agent.identity_fusion} />
           <TraitBar label="Chronesthesia" value={agent.chronesthesia_capacity} />
           <TraitBar label="ToM Self-Aware" value={agent.tom_self_awareness} />
           <TraitBar label="ToM Social" value={agent.tom_social_modeling} />
           <TraitBar label="Exec Flexibility" value={agent.executive_flexibility} />
+
+          {/* Big Five */}
           <p className="text-[11px] font-semibold text-[#7b61ff] uppercase tracking-widest mb-3 mt-4">
             Big Five
           </p>
@@ -141,6 +175,7 @@ function AgentCard({ agent, isNew }: { agent: Agent; isNew: boolean }) {
           <TraitBar label="Extraversion" value={agent.extraversion} />
           <TraitBar label="Agreeableness" value={agent.agreeableness} />
           <TraitBar label="Neuroticism" value={agent.neuroticism} />
+
           {typeof agent.communication_style === "number" && (
             <>
               <p className="text-[11px] font-semibold text-[#7b61ff] uppercase tracking-widest mb-3 mt-4">
