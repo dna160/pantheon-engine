@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 
 export const runtime = "nodejs";
-export const maxDuration = 300; // 5 min Vercel Pro limit
+export const maxDuration = 300;
 
 const MODAL_URL =
   process.env.MODAL_API_URL ||
@@ -16,12 +16,11 @@ export async function POST(req: NextRequest) {
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify(body),
       // @ts-ignore — Node 18+ fetch supports signal
-      signal: AbortSignal.timeout(290_000),
+      signal: AbortSignal.timeout(25_000),
     });
 
     const text = await upstream.text();
 
-    // Try to parse as JSON; fall back to plain text error
     let data: unknown;
     try {
       data = JSON.parse(text);

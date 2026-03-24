@@ -19,6 +19,7 @@ from src.presentation import _save_presentation
 from src.whisperer import _run_client_whisperer
 
 image = get_image()
+job_results = modal.Dict.from_name("pantheon-job-results", create_if_missing=True)
 app = modal.App(name="pantheon-engine")
 
 @app.function(image=image, secrets=SECRETS, timeout=120)
@@ -36,6 +37,15 @@ def modal_node4(group_reactions: list[dict], campaign_brief: str) -> dict:
 @app.function(image=image, secrets=SECRETS, timeout=1200)
 def modal_node5(mass_reactions: list[dict], breakout_transcripts: list[dict], campaign_brief: str) -> str:
     return node5_synthesis(mass_reactions, breakout_transcripts, campaign_brief)
+
+@app.function(image=image, secrets=SECRETS, timeout=3600)
+def run_pipeline_job(job_id: str, target: str, brief: str, client: str = "", limit: int = 10, group_size: int = 5):
+    import traceback
+    try:
+        result = run_pipeline_core(target, brief, client=client, limit=limit, group_size=group_size)
+        job_results[job_id] = result
+    except Exception as e:
+        job_results[job_id] = {"status": "error", "error": str(e), "trace": traceback.format_exc()}
 
 @app.function(image=image, secrets=SECRETS, timeout=3600)
 @modal.asgi_app()
@@ -62,11 +72,21 @@ def fastapi_app():
 
     @web_app.post("/run_pipeline")
     def api_run_pipeline(req: PipelineRequest):
-        import traceback
+        import uuid as _uuid
+        job_id = str(_uuid.uuid4())
+        job_results[job_id] = {"status": "running"}
+        run_pipeline_job.spawn(job_id, req.target, req.brief, req.client, req.limit, req.group_size)
+        return {"job_id": job_id}
+
+    @web_app.get("/job/{job_id}")
+    def api_job_status(job_id: str):
         try:
-            return run_pipeline_core(req.target, req.brief, client=req.client, limit=req.limit, group_size=req.group_size)
-        except Exception as e:
-            return {"error": str(e), "trace": traceback.format_exc()}
+            result = job_results.get(job_id)
+            if result is None:
+                return {"status": "not_found"}
+            return result
+        except Exception:
+            return {"status": "not_found"}
 
     @web_app.post("/seed")
     def api_seed(req: SeedRequest):

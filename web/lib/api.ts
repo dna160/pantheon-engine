@@ -1,23 +1,11 @@
 import type { PipelineConfig, PipelineResult } from "./types";
 
-const MODAL_URL =
-  process.env.NEXT_PUBLIC_MODAL_API_URL ||
-  "https://leonardijohnson0--pantheon-engine-fastapi-app.modal.run";
-
 export async function runPipeline(
   config: PipelineConfig,
   signal?: AbortSignal
 ): Promise<PipelineResult> {
-  // Call Modal directly — CORS is open (*) on Modal and Vercel's 300s proxy
-  // timeout is shorter than the pipeline runtime (can be 5-15 min for 10 agents).
-  // Use a combined signal: caller's abort + 20-minute hard cap.
-  const hardCap = AbortSignal.timeout(20 * 60 * 1000); // 20 min
-  const combined =
-    signal
-      ? AbortSignal.any([signal, hardCap])
-      : hardCap;
-
-  const response = await fetch(`${MODAL_URL}/run_pipeline`, {
+  // Step 1: Start the pipeline job (returns job_id immediately)
+  const startRes = await fetch("/api/pipeline", {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify({
@@ -27,31 +15,41 @@ export async function runPipeline(
       limit: config.limit,
       group_size: config.groupSize,
     }),
-    signal: combined,
+    signal,
   });
 
-  const text = await response.text();
-
-  let data: unknown;
-  try {
-    data = JSON.parse(text);
-  } catch {
-    throw new Error(
-      `Server returned non-JSON (${response.status}): ${text.slice(0, 300)}`
-    );
+  if (!startRes.ok) {
+    const text = await startRes.text();
+    throw new Error(`Failed to start pipeline (${startRes.status}): ${text.slice(0, 300)}`);
   }
 
-  if (!response.ok) {
-    const err =
-      (data as Record<string, string>)?.error ||
-      `Pipeline failed (${response.status})`;
-    throw new Error(err);
+  const { job_id } = await startRes.json();
+  if (!job_id) throw new Error("No job_id returned from pipeline start");
+
+  // Step 2: Poll until done
+  const deadline = Date.now() + 25 * 60 * 1000; // 25 min hard cap
+  while (Date.now() < deadline) {
+    if (signal?.aborted) throw new DOMException("Aborted", "AbortError");
+
+    await new Promise((r) => setTimeout(r, 5000)); // poll every 5s
+    if (signal?.aborted) throw new DOMException("Aborted", "AbortError");
+
+    const pollRes = await fetch(`/api/pipeline/status?job_id=${job_id}`, { signal });
+    if (!pollRes.ok) continue; // transient poll error — keep trying
+
+    const data = await pollRes.json() as Record<string, unknown>;
+
+    if (data.status === "done" || (data.status === "success" && data.report)) {
+      return data as unknown as PipelineResult;
+    }
+    if (data.status === "error") {
+      throw new Error((data.error as string) || "Pipeline failed");
+    }
+    if (data.status === "not_found") {
+      throw new Error("Job not found — pipeline may have crashed on startup");
+    }
+    // status === "running" → keep polling
   }
 
-  // Surface Modal-wrapped errors (200 with { error: "..." })
-  if ((data as Record<string, string>)?.error) {
-    throw new Error((data as Record<string, string>).error);
-  }
-
-  return data as PipelineResult;
+  throw new Error("Pipeline timed out after 25 minutes");
 }
