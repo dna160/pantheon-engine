@@ -2,6 +2,13 @@
   "version": "0.0.1",
   "configurations": [
     {
+      "name": "pantheon-web",
+      "runtimeExecutable": "C:/Program Files/nodejs/node.exe",
+      "runtimeArgs": ["node_modules/next/dist/bin/next", "dev"],
+      "cwd": "D:/Claude Home/venus-app/web",
+      "port": 3000
+    },
+    {
       "name": "whisperer-dashboard",
       "runtimeExecutable": "D:/Claude Home/venus-app/.venv/Scripts/streamlit",
       "runtimeArgs": ["run", "whisperer_dashboard.py", "--server.port", "8503", "--server.headless", "true"],
