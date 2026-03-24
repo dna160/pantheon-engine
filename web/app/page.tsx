@@ -173,14 +173,24 @@ export default function Home() {
                 Synthetic focus groups · Parallel LLM agents · Actionable research reports
               </p>
             </div>
-            <a
-              href="/whisperer"
-              className="shrink-0 flex items-center gap-2 px-4 py-2 rounded-xl border border-amber/40 bg-amber/10 text-amber text-sm font-semibold hover:bg-amber/20 hover:border-amber/60 transition-all duration-200 mt-1"
-            >
-              <span>🧠</span>
-              Human Whisperer
-              <span className="text-amber/60">→</span>
-            </a>
+            <div className="flex flex-col gap-2 mt-1">
+              <a
+                href="/whisperer"
+                className="shrink-0 flex items-center gap-2 px-4 py-2 rounded-xl border border-amber/40 bg-amber/10 text-amber text-sm font-semibold hover:bg-amber/20 hover:border-amber/60 transition-all duration-200"
+              >
+                <span>🧠</span>
+                Human Whisperer
+                <span className="text-amber/60">→</span>
+              </a>
+              <a
+                href="/seed"
+                className="shrink-0 flex items-center gap-2 px-4 py-2 rounded-xl border border-emerald-500/40 bg-emerald-500/10 text-emerald-400 text-sm font-semibold hover:bg-emerald-500/20 hover:border-emerald-500/60 transition-all duration-200"
+              >
+                <span>🧬</span>
+                Seed Agents
+                <span className="text-emerald-400/60">→</span>
+              </a>
+            </div>
           </div>
 
           <hr className="border-border mb-8" />
