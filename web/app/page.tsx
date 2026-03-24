@@ -41,13 +41,32 @@ export default function Home() {
     setHistory(loadHistory());
   }, []);
 
-  // Tick elapsed + animate node progress
+  // Tick elapsed + animate node progress + inject phase-aware status messages
+  const loggedMilestonesRef = useRef<Set<number>>(new Set());
   useEffect(() => {
     if (phase === "running") {
+      loggedMilestonesRef.current = new Set();
       timerRef.current = setInterval(() => {
         const secs = Math.floor((Date.now() - startRef.current) / 1000);
         setElapsed(secs);
         setNodes((prev) => tickNodes(prev, secs, agentLimit, groupSize));
+
+        // Inject informational logs at key milestones so the user knows it's alive
+        const milestones: Record<number, string> = {
+          15:  "[NODE 1] Querying Supabase agent pool...",
+          45:  "[NODE 2] Generating runtime snapshots — waking agents...",
+          90:  "[NODE 3] Phase A: Mass session underway — collecting gut reactions...",
+          180: "[NODE 3] Phase A still running — large agent pools take 3-5 min...",
+          240: "[NODE 4] Breakout rooms forming — debate generation in progress...",
+          300: "[NODE 4] Still in breakout — complex groups can take 5-8 min total...",
+          420: "[NODE 5] Synthesis underway — generating intelligence report...",
+          540: "[NODE 5] Report generation in progress — almost there...",
+        };
+        if (milestones[secs] && !loggedMilestonesRef.current.has(secs)) {
+          loggedMilestonesRef.current.add(secs);
+          setLogs((prev) => [...prev, milestones[secs]]);
+          setStatusText(milestones[secs].replace(/^\[.*?\]\s*/, ""));
+        }
       }, 1000);
     } else {
       if (timerRef.current) clearInterval(timerRef.current);
