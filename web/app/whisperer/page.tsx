@@ -447,13 +447,23 @@ export default function WhispererPage() {
         <div className="max-w-4xl mx-auto px-8 py-10">
 
           {/* Header */}
-          <div className="mb-6">
-            <div className="text-xs font-semibold tracking-[4px] text-amber uppercase mb-2">Client Intelligence</div>
-            <h1 className="text-3xl font-black text-white mb-1">Human Whisperer</h1>
-            <p className="text-text-dim text-sm">
-              Enter a prospect's LinkedIn and Instagram, plus what you're offering.
-              The engine builds their full life blueprint and returns a hyper-targeted conversation prep.
-            </p>
+          <div className="flex items-start justify-between mb-6">
+            <div>
+              <div className="text-xs font-semibold tracking-[4px] text-amber uppercase mb-2">Client Intelligence</div>
+              <h1 className="text-3xl font-black text-white mb-1">Human Whisperer</h1>
+              <p className="text-text-dim text-sm">
+                Enter a prospect's LinkedIn and Instagram, plus what you're offering.
+                The engine builds their full life blueprint and returns a hyper-targeted conversation prep.
+              </p>
+            </div>
+            <Link
+              href="/"
+              className="shrink-0 flex items-center gap-2 px-4 py-2 rounded-xl border border-purple/40 bg-purple/10 text-purple text-sm font-semibold hover:bg-purple/20 hover:border-purple/60 transition-all duration-200 mt-1"
+            >
+              <span className="text-purple/60">←</span>
+              PANTHEON
+              <span>⚡</span>
+            </Link>
           </div>
 
           {/* Tabs */}
