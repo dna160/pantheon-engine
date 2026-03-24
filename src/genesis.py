@@ -14,6 +14,7 @@ _MUTABLE_TRAITS = [
     "literacy_and_articulation", "socioeconomic_friction",
     "identity_fusion", "chronesthesia_capacity", "tom_self_awareness",
     "tom_social_modeling", "executive_flexibility",
+    "religiosity",
 ]
 
 _GENOME_TOOL = {
@@ -61,13 +62,29 @@ _GENOME_TOOL = {
                 "type": "integer",
                 "description": "1=base traits leak into all contexts regardless of social norms, 100=can fully override impulses in context-appropriate situations (the professional who is privately anxious but appears calm)."
             },
-            "religion": {
+            "current_religion": {
                 "type": "string",
                 "description": "Specific religious practice and denomination/sect, defining behavior/diet/finances (e.g., 'Conservative Sunni Muslim - halal strict', 'Devout Catholic - family-centric', 'Nominally Buddhist', 'Pentecostal - tithing')."
             },
-            "cultural_background": {
+            "religiosity": {
+                "type": "integer",
+                "description": "1=completely nominal/secular (religion has zero practical effect on daily behavior), 100=devout and observant (religion dictates diet, dress, finances, social circle, and daily schedule)."
+            },
+            "ethnicity": {
                 "type": "string",
-                "description": "The ethno-cultural context dictating family expectations, hierarchy, and shame mechanics (e.g., 'Third-generation Chinese-Indonesian', 'Minangkabau diaspora', 'Batak Toba strictly adhering to Adat', 'Javanese')."
+                "description": "Short ethnicity label rooted in the assigned city/region (e.g., 'Javanese', 'Chinese-Indonesian', 'Batak Toba', 'Minangkabau', 'Betawi', 'Sundanese', 'Bugis', 'Malay'). Must be authentic to the ASSIGNED CITY."
+            },
+            "cultural_primary": {
+                "type": "string",
+                "description": "Dominant cultural identity that shapes this person's worldview, family norms, and shame mechanics (e.g., 'Javanese priyayi — hierarchical, indirect, refinement-obsessed', 'Batak Toba — clan honor, loud negotiation, adat-rooted', 'Chinese-Indonesian — mianzi, guanxi, filial piety')."
+            },
+            "cultural_secondary": {
+                "type": "string",
+                "description": "Secondary cultural layer from migration, education, or partner influence (e.g., 'Westernized by Singapore MBA', 'Javanese mother, Batak father — identity negotiation ongoing', 'None — monocultural'). Use 'None' if not applicable."
+            },
+            "partner_culture": {
+                "type": "string",
+                "description": "Partner or spouse's cultural background and its influence on purchasing decisions (e.g., 'Sundanese wife — consensus-driven purchasing', 'No partner', 'Mixed-culture marriage — dual approval required for big purchases')."
             },
             "voice_print": {
                 "type": "object",
@@ -88,7 +105,8 @@ _GENOME_TOOL = {
             "literacy_and_articulation", "socioeconomic_friction",
             "identity_fusion", "chronesthesia_capacity", "tom_self_awareness",
             "tom_social_modeling", "executive_flexibility",
-            "religion", "cultural_background", "voice_print"
+            "current_religion", "religiosity", "ethnicity",
+            "cultural_primary", "cultural_secondary", "partner_culture", "voice_print"
         ],
         "additionalProperties": False
     }
@@ -151,18 +169,109 @@ _INDONESIAN_CITIES = [
     "Pontianak", "Banjarmasin"
 ]
 
-_SEED_TEMPLATES = [
-    "Chinese-Indonesian {age}yo, third-generation trading family in {city}, conservative, status-conscious, clan association active, luxury-car aspirations.",
-    "Batak Toba {age}yo professional (lawyer/doctor/engineer) now based in {city}, feminist but adat-rooted, heavy Instagram user, premium-mall shopper, skeptical of ads.",
-    "Javanese {age}yo entrepreneur or startup founder based in {city}, GrabFood/TikTok/Tokopedia native, frugal personally but aggressive in business, peer-recommendation-driven.",
-    "Minangkabau {age}yo female professional in {city}, evidence-driven, remittance sender, slow decision-maker with extreme conviction, anti-influencer, clinic or consultancy owner.",
-    "Batak Karo / Dayak {age}yo regional manager or sales director in {city}, rose from field ops, sends kids to international school, peer-influenced, LinkedIn poster, brand-insecure.",
-    "Chinese-Peranakan {age}yo in {city}, property investor or café owner, bilingual Chinese-dialect/Bahasa, mianzi-driven, early adopter of premium lifestyle brands.",
-    "Sundanese/Javanese {age}yo salaried professional in {city} (banking/FMCG/government), quietly status-conscious, Shopee/Tokopedia power-user, brand-loyal to established names.",
-    "Bugis {age}yo entrepreneur in {city}, maritime-trade heritage, tight community network, cash-first, distrustful of fintech debt products, drives hard bargains.",
-    "Acehnese / Malay {age}yo in {city}, religiously observant, halal-compliant purchasing, rejects riba-adjacent products, strong family decision-making unit.",
-    "Urban millennial {age}yo from {city}, mixed ethnicity, college-educated, remote-worker, high digital literacy, rents not owns, aspirational but cash-constrained."
+# Keyword → canonical city name. Checked against lowercased demographic string.
+_CITY_KEYWORDS: dict[str, str] = {
+    "jakarta": "Jakarta",
+    "jabodetabek": "Jakarta",
+    "tangerang": "Jakarta",
+    "bekasi": "Jakarta",
+    "depok": "Jakarta",
+    "bogor": "Jakarta",
+    "surabaya": "Surabaya",
+    "bandung": "Bandung",
+    "medan": "Medan",
+    "makassar": "Makassar",
+    "ujung pandang": "Makassar",
+    "semarang": "Semarang",
+    "yogyakarta": "Yogyakarta",
+    "yogya": "Yogyakarta",
+    "jogja": "Yogyakarta",
+    "palembang": "Palembang",
+    "bali": "Bali (Denpasar)",
+    "denpasar": "Bali (Denpasar)",
+    "balikpapan": "Balikpapan",
+    "malang": "Malang",
+    "manado": "Manado",
+    "pekanbaru": "Pekanbaru",
+    "pontianak": "Pontianak",
+    "banjarmasin": "Banjarmasin",
+}
+
+# Each template is tagged with the ethnicities it represents so we can
+# weight selection toward templates that match the demographic text.
+_SEED_TEMPLATES: list[dict] = [
+    {
+        "tags": ["chinese", "peranakan", "tionghoa"],
+        "template": "Chinese-Indonesian {age}yo, third-generation trading family in {city}, conservative, status-conscious, clan association active, luxury-car aspirations."
+    },
+    {
+        "tags": ["batak", "toba", "christian"],
+        "template": "Batak Toba {age}yo professional (lawyer/doctor/engineer) now based in {city}, feminist but adat-rooted, heavy Instagram user, premium-mall shopper, skeptical of ads."
+    },
+    {
+        "tags": ["javanese", "java", "jawa"],
+        "template": "Javanese {age}yo entrepreneur or startup founder based in {city}, GrabFood/TikTok/Tokopedia native, frugal personally but aggressive in business, peer-recommendation-driven."
+    },
+    {
+        "tags": ["minangkabau", "minang", "padang", "west sumatera"],
+        "template": "Minangkabau {age}yo female professional in {city}, evidence-driven, remittance sender, slow decision-maker with extreme conviction, anti-influencer, clinic or consultancy owner."
+    },
+    {
+        "tags": ["batak", "karo", "dayak", "kalimantan"],
+        "template": "Batak Karo / Dayak {age}yo regional manager or sales director in {city}, rose from field ops, sends kids to international school, peer-influenced, LinkedIn poster, brand-insecure."
+    },
+    {
+        "tags": ["chinese", "peranakan", "tionghoa"],
+        "template": "Chinese-Peranakan {age}yo in {city}, property investor or café owner, bilingual Chinese-dialect/Bahasa, mianzi-driven, early adopter of premium lifestyle brands."
+    },
+    {
+        "tags": ["sundanese", "sunda", "javanese", "java", "jawa"],
+        "template": "Sundanese/Javanese {age}yo salaried professional in {city} (banking/FMCG/government), quietly status-conscious, Shopee/Tokopedia power-user, brand-loyal to established names."
+    },
+    {
+        "tags": ["bugis", "sulawesi", "makassar"],
+        "template": "Bugis {age}yo entrepreneur in {city}, maritime-trade heritage, tight community network, cash-first, distrustful of fintech debt products, drives hard bargains."
+    },
+    {
+        "tags": ["acehnese", "aceh", "malay", "melayu"],
+        "template": "Acehnese / Malay {age}yo in {city}, religiously observant, halal-compliant purchasing, rejects riba-adjacent products, strong family decision-making unit."
+    },
+    {
+        "tags": ["urban", "millennial", "mixed"],
+        "template": "Urban millennial {age}yo from {city}, mixed ethnicity, college-educated, remote-worker, high digital literacy, rents not owns, aspirational but cash-constrained."
+    },
+    {
+        "tags": ["betawi", "jakarta", "jabodetabek"],
+        "template": "Betawi {age}yo native of {city}, middle-class salaried worker, socially conservative, mosque-active, prefers brand names he recognizes from TV, resists aggressive sales tactics."
+    },
+    {
+        "tags": ["chinese", "tionghoa", "jakarta", "surabaya", "bandung"],
+        "template": "Chinese-Indonesian {age}yo second-generation business owner in {city}, secular Confucianist background, pragmatic buyer, distrusts government-linked products, relationship-driven."
+    },
 ]
+
+
+def _extract_city(demographic: str) -> str | None:
+    """Return canonical city if demographic explicitly mentions one, else None."""
+    lower = demographic.lower()
+    for keyword, city in _CITY_KEYWORDS.items():
+        if keyword in lower:
+            return city
+    return None
+
+
+def _pick_template(demographic: str) -> str:
+    """Return a template whose tags best match the demographic text, with random tiebreaking."""
+    lower = demographic.lower()
+    scored: list[tuple[int, dict]] = []
+    for entry in _SEED_TEMPLATES:
+        score = sum(1 for tag in entry["tags"] if tag in lower)
+        scored.append((score, entry))
+    max_score = max(s for s, _ in scored)
+    # If any tags matched, pick from the best-matching set; else use all templates.
+    candidates = [e for s, e in scored if s == max_score and (max_score > 0 or True)]
+    chosen = random.choice(candidates)
+    return chosen["template"]
 
 _GENESIS_SYSTEM_BASE = (
     "You are PANTHEON Genesis Builder: generating psychologically coherent Indonesian consumer profiles.\n"
@@ -244,11 +353,15 @@ def _generate_one_agent(anthropic_client, age: int, seed: str, city: str, demogr
 def dynamic_seed_agents(demographic: str, count: int, sb, anthropic_client) -> list[dict]:
     age_match = re.search(r"(\d+)[^\d]+(\d+)", demographic)
     age_min, age_max = (int(age_match.group(1)), int(age_match.group(2))) if age_match else (25, 45)
+
+    # Lock city to whatever is mentioned in the demographic; fall back to random only if none found.
+    pinned_city = _extract_city(demographic)
+
     created = []
     for i in range(count):
-        city = random.choice(_INDONESIAN_CITIES)
+        city = pinned_city if pinned_city else random.choice(_INDONESIAN_CITIES)
         age = random.randint(age_min, age_max)
-        template = random.choice(_SEED_TEMPLATES)
+        template = _pick_template(demographic)
         seed = template.format(age=age, city=city)
         data = _generate_one_agent(anthropic_client, age, seed, city=city, demographic=demographic)
         if data is None: continue
@@ -259,15 +372,18 @@ def dynamic_seed_agents(demographic: str, count: int, sb, anthropic_client) -> l
             "age": age,
             "region": f"{city}, Indonesia",
             **{k: data.get(k, 50) for k in _MUTABLE_TRAITS},
-            "religion": data.get("religion", "Unspecified"),
-            "cultural_background": data.get("cultural_background", "Unspecified"),
+            "ethnicity": data.get("ethnicity", "Unspecified"),
+            "current_religion": data.get("current_religion", "Unspecified"),
+            "cultural_primary": data.get("cultural_primary", ""),
+            "cultural_secondary": data.get("cultural_secondary", ""),
+            "partner_culture": data.get("partner_culture", ""),
             "genome_mutation_log": data.get("genome_mutation_log", []),
-            "origin_layer": data["origin_layer"],
-            "formation_layer": data["formation_layer"],
-            "independence_layer": data["independence_layer"],
-            "maturity_layer": data["maturity_layer"],
-            "legacy_layer": data["legacy_layer"],
-            "voice_print": data["voice_print"],
+            "origin_layer": data.get("origin_layer", ""),
+            "formation_layer": data.get("formation_layer", ""),
+            "independence_layer": data.get("independence_layer", ""),
+            "maturity_layer": data.get("maturity_layer", ""),
+            "legacy_layer": data.get("legacy_layer", ""),
+            "voice_print": data.get("voice_print", ""),
         }
         sb.table("agent_genomes").insert(payload).execute()
         created.append(payload)
