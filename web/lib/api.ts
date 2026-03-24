@@ -1,14 +1,12 @@
 import type { PipelineConfig, PipelineResult } from "./types";
 
-const MODAL_URL =
-  process.env.NEXT_PUBLIC_MODAL_API_URL ||
-  "https://leonardijohnson0--pantheon-engine-fastapi-app.modal.run";
-
 export async function runPipeline(
   config: PipelineConfig,
   signal?: AbortSignal
 ): Promise<PipelineResult> {
-  const response = await fetch(`${MODAL_URL}/run_pipeline`, {
+  // Route through Vercel API proxy — avoids browser timeout on long pipeline runs
+  // and bypasses any CORS issues with Modal directly.
+  const response = await fetch("/api/pipeline", {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify({
@@ -21,10 +19,24 @@ export async function runPipeline(
     signal,
   });
 
-  if (!response.ok) {
-    const text = await response.text().catch(() => "Unknown error");
-    throw new Error(`Pipeline failed (${response.status}): ${text}`);
+  const text = await response.text();
+
+  let data: unknown;
+  try {
+    data = JSON.parse(text);
+  } catch {
+    throw new Error(`Server returned non-JSON (${response.status}): ${text.slice(0, 300)}`);
   }
 
-  return response.json();
+  if (!response.ok) {
+    const err = (data as Record<string, string>)?.error || `Pipeline failed (${response.status})`;
+    throw new Error(err);
+  }
+
+  // Surface any error returned inside a 200 payload (Modal error wrapping)
+  if ((data as Record<string, string>)?.error) {
+    throw new Error((data as Record<string, string>).error);
+  }
+
+  return data as PipelineResult;
 }

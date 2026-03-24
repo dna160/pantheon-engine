@@ -62,7 +62,11 @@ def fastapi_app():
 
     @web_app.post("/run_pipeline")
     def api_run_pipeline(req: PipelineRequest):
-        return run_pipeline_core(req.target, req.brief, client=req.client, limit=req.limit, group_size=req.group_size)
+        import traceback
+        try:
+            return run_pipeline_core(req.target, req.brief, client=req.client, limit=req.limit, group_size=req.group_size)
+        except Exception as e:
+            return {"error": str(e), "trace": traceback.format_exc()}
 
     @web_app.post("/seed")
     def api_seed(req: SeedRequest):
@@ -112,7 +116,10 @@ def node1_intake_and_query(target_demographic: str, limit: int = 10) -> list[dic
     stm = parts[1] if len(parts) >= 2 else ""
 
     unique_result = sb.table("agent_genomes").select("target_demographic").execute()
-    available_demos = sorted(set(row["target_demographic"] for row in unique_result.data))
+    available_demos = sorted(set(
+        row["target_demographic"] for row in unique_result.data
+        if row["target_demographic"] is not None
+    ))
     
     approved_demos = evaluate_demographics(ptm, stm, available_demos, ac)
     for d in (ptm, stm):
