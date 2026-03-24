@@ -161,16 +161,26 @@ export default function Home() {
         <div className="max-w-4xl mx-auto px-8 py-10">
 
           {/* ── Page header ── */}
-          <div className="mb-8">
-            <div className="text-xs font-semibold tracking-[4px] text-purple uppercase mb-2">
-              Market Research Intelligence
+          <div className="flex items-start justify-between mb-8">
+            <div>
+              <div className="text-xs font-semibold tracking-[4px] text-purple uppercase mb-2">
+                Market Research Intelligence
+              </div>
+              <h1 className="text-4xl font-black tracking-tight text-white mb-2">
+                PANTHEON
+              </h1>
+              <p className="text-text-dim text-[15px]">
+                Synthetic focus groups · Parallel LLM agents · Actionable research reports
+              </p>
             </div>
-            <h1 className="text-4xl font-black tracking-tight text-white mb-2">
-              PANTHEON
-            </h1>
-            <p className="text-text-dim text-[15px]">
-              Synthetic focus groups · Parallel LLM agents · Actionable research reports
-            </p>
+            <a
+              href="/whisperer"
+              className="shrink-0 flex items-center gap-2 px-4 py-2 rounded-xl border border-amber/40 bg-amber/10 text-amber text-sm font-semibold hover:bg-amber/20 hover:border-amber/60 transition-all duration-200 mt-1"
+            >
+              <span>🧠</span>
+              Human Whisperer
+              <span className="text-amber/60">→</span>
+            </a>
           </div>
 
           <hr className="border-border mb-8" />
