@@ -22,15 +22,20 @@ export default function BriefInput({ value, onChange, onImagesExtracted, disable
   const isVisualBrief = (file: File) =>
     file.name.toLowerCase().endsWith(".pdf") || file.name.toLowerCase().endsWith(".pptx");
 
-  // Safe JSON parser — handles plain-text error responses (e.g. Vercel 413, Modal errors)
+  // Modal is called directly from the browser for PDF/PPTX — bypasses Vercel's 4.5 MB
+  // serverless body limit entirely. CORS is open on Modal (allow_origins=["*"]).
+  const MODAL_URL =
+    process.env.NEXT_PUBLIC_MODAL_API_URL ||
+    "https://leonardijohnson0--pantheon-engine-fastapi-app.modal.run";
+
+  // Safe JSON parser — handles plain-text error bodies from any server
   async function safeJson(res: Response): Promise<{ ok: boolean; data: Record<string, unknown>; errorText: string }> {
     const text = await res.text();
     try {
       return { ok: res.ok, data: JSON.parse(text), errorText: "" };
     } catch {
-      // Server returned non-JSON (e.g. "Request Entity Too Large" from Vercel/Modal)
       const hint = res.status === 413
-        ? "File is too large for the server to accept."
+        ? "File is too large. Try a smaller file or reduce the number of pages."
         : text.slice(0, 200) || `Server error (${res.status})`;
       return { ok: false, data: {}, errorText: hint };
     }
@@ -40,8 +45,8 @@ export default function BriefInput({ value, onChange, onImagesExtracted, disable
     const file = e.target.files?.[0];
     if (!file) return;
 
-    // Client-side size guard — Vercel serverless limit is ~4.5 MB on Hobby, higher on Pro
-    const MAX_MB = 50;
+    // Client-side guard — 150 MB absolute ceiling
+    const MAX_MB = 150;
     if (file.size > MAX_MB * 1024 * 1024) {
       setUploadMsg({ type: "err", text: `File too large (${(file.size / 1024 / 1024).toFixed(1)} MB). Maximum is ${MAX_MB} MB.` });
       if (fileRef.current) fileRef.current.value = "";
@@ -59,8 +64,8 @@ export default function BriefInput({ value, onChange, onImagesExtracted, disable
       formData.append("file", file);
 
       if (isVisualBrief(file)) {
-        // Multimodal extraction — get both text and slide images from Modal
-        const res = await fetch("/api/extract-visual", { method: "POST", body: formData });
+        // PDF / PPTX — POST directly to Modal (no Vercel proxy, no 4.5 MB limit)
+        const res = await fetch(`${MODAL_URL}/extract-brief`, { method: "POST", body: formData });
         const { ok, data, errorText } = await safeJson(res);
 
         if (ok && data.text) {
@@ -77,7 +82,7 @@ export default function BriefInput({ value, onChange, onImagesExtracted, disable
           setUploadMsg({ type: "err", text: errorText || (data.error as string) || "Extraction failed" });
         }
       } else {
-        // Text-only extraction (DOCX, TXT)
+        // DOCX / TXT — text-only, small enough to go through Vercel
         const res = await fetch("/api/extract", { method: "POST", body: formData });
         const { ok, data, errorText } = await safeJson(res);
 
