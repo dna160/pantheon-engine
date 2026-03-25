@@ -146,7 +146,7 @@ const DECK_CONTENT_TOOL: Anthropic.Tool = {
 async function extractDeckContent(report: string, target: string, brief: string, client: string): Promise<any> {
   const ac = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY });
   const resp = await ac.messages.create({
-    model: "claude-sonnet-4-6",
+    model: "claude-haiku-4-5",
     max_tokens: 4096,
     system: "You are an expert MBB presentation strategist. Extract concise, punchy content from the PANTHEON research report for a professional executive slide deck. Be specific and data-driven. Every field must be populated with meaningful content.",
     tools: [DECK_CONTENT_TOOL],

@@ -178,12 +178,12 @@ export async function POST(req: NextRequest) {
 
     const ac = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY });
     const resp = await ac.messages.create({
-      model: "claude-sonnet-4-6",
-      max_tokens: 8192,
+      model: "claude-haiku-4-5",
+      max_tokens: 4096,
       system: WHISPERER_SYSTEM,
       messages: [{
         role: "user",
-        content: `Generate the Meeting Prep Document based on the following context.\n\nClient/Product context: ${client || "(Unknown/Generic)"}\nTarget demographic: ${target || ""}\nCampaign brief: ${brief || ""}\n\n--- PANTHEON RESEARCH INTELLIGENCE REPORT ---\n${report.slice(0, 40000)}`,
+        content: `Generate the Meeting Prep Document based on the following context.\n\nClient/Product context: ${client || "(Unknown/Generic)"}\nTarget demographic: ${target || ""}\nCampaign brief: ${brief || ""}\n\n--- PANTHEON RESEARCH INTELLIGENCE REPORT ---\n${report.slice(0, 16000)}`,
       }],
     });
 
