@@ -53,7 +53,7 @@ def node5_synthesis(mass_reactions: list[dict], breakout_transcripts: list[dict]
     # Phase A summary — rich format with emotion/temperature/relevance scores
     phase_a_lines = []
     for r in mass_reactions:
-        if r.get("status") != "ok" or not r.get("phase_a"):
+        if not isinstance(r, dict) or r.get("status") != "ok" or not r.get("phase_a"):
             continue
         pa = r["phase_a"]
         phase_a_lines.append(
@@ -66,7 +66,7 @@ def node5_synthesis(mass_reactions: list[dict], breakout_transcripts: list[dict]
     # Phase B transcripts — include participant ages
     phase_b_lines = []
     for tb in breakout_transcripts:
-        if not tb.get("transcript"):
+        if not isinstance(tb, dict) or not tb.get("transcript"):
             phase_b_lines.append(f"[Group transcript unavailable — {tb.get('error', 'unknown error')}]")
         else:
             ages = ", ".join(str(a) for a in tb.get("participant_ages", []))

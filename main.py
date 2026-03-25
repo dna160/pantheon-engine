@@ -210,10 +210,17 @@ def run_pipeline_core(target: str, brief: str, client: str = "", limit: int = 10
     if not agents: return {"error": "No agents found"}
 
     dynamic_agents = list(modal_node2.map(agents))
+    # Guard: Modal starmap can leak string error objects on individual call failures
+    dynamic_agents = [da for da in dynamic_agents if isinstance(da, dict)]
+
     mass_reactions = list(modal_node3.starmap([(da, brief, brief_images) for da in dynamic_agents]))
+    mass_reactions = [r for r in mass_reactions if isinstance(r, dict)]
+    if not mass_reactions:
+        return {"error": "All Node 3 agent reactions failed — no valid mass reaction data"}
 
     groups = [mass_reactions[i:i+group_size] for i in range(0, len(mass_reactions), group_size)]
     transcripts = list(modal_node4.starmap([(g, brief, brief_images) for g in groups]))
+    transcripts = [t for t in transcripts if isinstance(t, dict)]
 
     report = modal_node5.remote(mass_reactions, transcripts, brief)
 
