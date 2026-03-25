@@ -1,3 +1,9 @@
+/**
+ * @deprecated Use /api/human-whisperer instead.
+ * This route is kept for backwards compatibility only.
+ * All new calls should go to /api/human-whisperer (individual person, scraping pipeline).
+ * For PANTHEON brand meeting prep use /api/download/client-whisperer.
+ */
 import { NextRequest, NextResponse } from "next/server";
 
 export const runtime = "nodejs";

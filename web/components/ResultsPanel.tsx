@@ -66,7 +66,7 @@ export default function ResultsPanel({ report, elapsed, client, target, brief = 
   async function handleDownloadWhisperer() {
     setDownloadingWhisperer(true);
     try {
-      const res = await fetch("/api/download/whisperer", {
+      const res = await fetch("/api/download/client-whisperer", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ report, target, client, brief }),

@@ -370,7 +370,7 @@ export default function WhispererPage() {
     setErrorMsg("");
 
     try {
-      const res = await fetch("/api/whisper", {
+      const res = await fetch("/api/human-whisperer", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({

@@ -1,9 +1,32 @@
 /**
- * @deprecated Use /api/download/client-whisperer instead.
- * This route is kept for backwards compatibility only.
- * All new calls should go to /api/download/client-whisperer (B2B brand meeting prep).
- * For individual person conversation prep use /api/human-whisperer.
+ * ════════════════════════════════════════════════════════════════
+ * CLIENT WHISPERER — /api/download/client-whisperer
+ * ════════════════════════════════════════════════════════════════
+ *
+ * PURPOSE:  B2B brand meeting prep for Storytellers account teams.
+ *
+ * INPUT:    report (PANTHEON Research Intelligence Report text)
+ *           client  (brand/company name — WHO THE MEETING IS WITH)
+ *           target  (research segment studied — NOT the meeting audience)
+ *           brief   (original campaign brief)
+ *
+ * OUTPUT:   [CLIENT_NAME]_MeetingPrep_[date].docx — 6-section meeting prep doc:
+ *           Section 1: Client Snapshot (brand situation, what PANTHEON found)
+ *           Section 2: Conversation Architecture (Storytellers → brand team)
+ *           Section 3: Signal Reading Guide (brand team open/close signals)
+ *           Section 4: Plain Language Translation (PANTHEON insights → brand-readable)
+ *           Section 5: Storytellers CTA & Service Fit (IN/ADJACENT/OUT-OF-SCOPE)
+ *           Section 6: Meeting Logistics
+ *
+ * NOT FOR:  Individual people. Consumer conversion. Talking to research subjects.
+ *           If you have a LinkedIn/Instagram profile — use /api/human-whisperer instead.
+ *
+ * CRITICAL: The "target" field is the RESEARCH SEGMENT (consumers PANTHEON studied).
+ *           They are NOT in the meeting. The BRAND (client field) is in the meeting.
+ *           All questions, probes, and CTAs target the brand team — never consumers.
+ * ════════════════════════════════════════════════════════════════
  */
+
 import { NextRequest, NextResponse } from "next/server";
 import Anthropic from "@anthropic-ai/sdk";
 import { Document, Packer, Paragraph, TextRun, HeadingLevel } from "docx";
@@ -11,7 +34,12 @@ import { Document, Packer, Paragraph, TextRun, HeadingLevel } from "docx";
 export const runtime = "nodejs";
 export const maxDuration = 60;
 
-const WHISPERER_SYSTEM = `You are the Client Whisperer — Storytellers Creative Solutions' internal B2B meeting prep engine.
+// ─── System Prompt ────────────────────────────────────────────────────────────
+// This prompt governs the Claude API call that generates the meeting prep doc.
+// It is strictly B2B — Storytellers presenting PANTHEON research to a brand company.
+// It must NEVER produce consumer-facing content or talk to research subjects.
+
+const CLIENT_WHISPERER_SYSTEM = `You are the Client Whisperer — Storytellers Creative Solutions' internal B2B meeting prep engine.
 
 ═══════════════════════════════════════════════════════════════
 CRITICAL ORIENTATION — READ BEFORE ANYTHING ELSE
@@ -51,8 +79,8 @@ STORYTELLERS SERVICE SCOPE:
 - Digital strategy and CRM behavioral logic (brief-level only, not technical build)
 
 FLAG EACH SERVICE:
-[✓ IN SCOPE]   — Storytellers delivers this directly
-[~ ADJACENT]   — Storytellers advises/briefs; specialist executes — say so explicitly
+[✓ IN SCOPE]     — Storytellers delivers this directly
+[~ ADJACENT]     — Storytellers advises/briefs; specialist executes — say so explicitly
 [✗ OUT OF SCOPE] — Refer out; never present as a Storytellers offering
 
 RULE: Never build a CTA around an [✗ OUT OF SCOPE] service.
@@ -102,7 +130,7 @@ Sensitivity Zone: [where to tread carefully and why]
 Kill Switch Risk: [the finding most likely to blow up the room if mishandled]
 
 # THE CONVERSATION ARCHITECTURE
-Note at top: All probe questions and stage scripts are for Storytellers talking TO the brand team.
+Note: All probe questions and stage scripts are for Storytellers talking TO the brand team.
 Not for talking to consumers. Every question targets the brand's assumptions, decisions, and strategy.
 
 ## STAGE 1: ESTABLISH (5–10 min)
@@ -189,6 +217,8 @@ BANNED: leverage, synergy, holistic, ecosystem, best-in-class, "at the end of th
 ALWAYS AVAILABLE: "The honest version of this is..." / "Most brands think X. What the research shows is Y." / "This isn't a creative problem — it's a positioning problem."
 NEVER start a sentence with "I".`;
 
+// ─── Markdown → DOCX converter ───────────────────────────────────────────────
+
 function markdownToDocx(md: string): Document {
   const children: Paragraph[] = [];
 
@@ -229,10 +259,15 @@ function markdownToDocx(md: string): Document {
   return new Document({ sections: [{ children }] });
 }
 
+// ─── POST handler ─────────────────────────────────────────────────────────────
+
 export async function POST(req: NextRequest) {
   try {
     const { report, target, client, brief } = await req.json();
-    if (!report) return NextResponse.json({ error: "No report provided" }, { status: 400 });
+
+    if (!report) {
+      return NextResponse.json({ error: "No PANTHEON report provided" }, { status: 400 });
+    }
     if (!process.env.ANTHROPIC_API_KEY) {
       return NextResponse.json({ error: "ANTHROPIC_API_KEY not configured" }, { status: 500 });
     }
@@ -241,28 +276,27 @@ export async function POST(req: NextRequest) {
     const resp = await ac.messages.create({
       model: "claude-haiku-4-5",
       max_tokens: 4096,
-      system: WHISPERER_SYSTEM,
+      system: CLIENT_WHISPERER_SYSTEM,
       messages: [{
         role: "user",
-        content: `Generate the Meeting Prep Document for the following B2B client meeting.
+        content: `Generate the Client Whisperer Meeting Prep Document for the following B2B brand meeting.
 
 BRAND CLIENT TO MEET: ${client || "(Unknown — infer from report)"}
 RESEARCH SEGMENT STUDIED BY PANTHEON (NOT the meeting audience — these are the consumers PANTHEON researched on behalf of the brand): ${target || ""}
 CAMPAIGN BRIEF: ${brief || ""}
 
 The document must prepare Storytellers' account team for a meeting WITH the brand (${client || "the brand"}), NOT for talking to the research segment above.
-All probe questions, conversation stages, and CTAs are directed at the brand's team.
+All probe questions, conversation stages, and CTAs are directed at the brand's marketing team.
 
 --- PANTHEON RESEARCH INTELLIGENCE REPORT ---
 ${report.slice(0, 16000)}`,
       }],
     });
 
-    let whispererMd = resp.content[0].type === "text" ? resp.content[0].text : "";
-    // Strip any accidental code fences
-    whispererMd = whispererMd.replace(/^```(?:markdown)?\n/i, "").replace(/\n```$/, "").trim();
+    let md = resp.content[0].type === "text" ? resp.content[0].text : "";
+    md = md.replace(/^```(?:markdown)?\n/i, "").replace(/\n```$/, "").trim();
 
-    const doc = markdownToDocx(whispererMd);
+    const doc = markdownToDocx(md);
     const buffer = await Packer.toBuffer(doc);
 
     const slug = ((client || target || "report") as string).replace(/[^\w]/g, "_").slice(0, 40);
@@ -276,9 +310,9 @@ ${report.slice(0, 16000)}`,
       },
     });
   } catch (err: unknown) {
-    console.error("[whisperer download]", err);
+    console.error("[client-whisperer]", err);
     return NextResponse.json(
-      { error: err instanceof Error ? err.message : "Failed to generate whisperer doc" },
+      { error: err instanceof Error ? err.message : "Failed to generate Client Whisperer doc" },
       { status: 500 }
     );
   }
