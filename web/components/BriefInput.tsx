@@ -5,17 +5,22 @@ import React, { useState, useRef } from "react";
 interface BriefInputProps {
   value: string;
   onChange: (text: string) => void;
+  onImagesExtracted?: (images: string[]) => void;
   disabled?: boolean;
 }
 
-export default function BriefInput({ value, onChange, disabled }: BriefInputProps) {
+export default function BriefInput({ value, onChange, onImagesExtracted, disabled }: BriefInputProps) {
   const [activeTab, setActiveTab] = useState<"paste" | "upload">("paste");
   const [uploading, setUploading] = useState(false);
   const [uploadMsg, setUploadMsg] = useState<{ type: "ok" | "err"; text: string } | null>(null);
+  const [slideCount, setSlideCount] = useState(0);
+  const [thumbnails, setThumbnails] = useState<string[]>([]);
   const fileRef = useRef<HTMLInputElement>(null);
 
   const charCount = value.length;
   const briefReady = charCount > 50;
+  const isVisualBrief = (file: File) =>
+    file.name.toLowerCase().endsWith(".pdf") || file.name.toLowerCase().endsWith(".pptx");
 
   async function handleFileChange(e: React.ChangeEvent<HTMLInputElement>) {
     const file = e.target.files?.[0];
@@ -23,19 +28,43 @@ export default function BriefInput({ value, onChange, disabled }: BriefInputProp
 
     setUploading(true);
     setUploadMsg(null);
+    setSlideCount(0);
+    setThumbnails([]);
+    onImagesExtracted?.([]);
 
     try {
       const formData = new FormData();
       formData.append("file", file);
 
-      const res = await fetch("/api/extract", { method: "POST", body: formData });
-      const json = await res.json();
+      if (isVisualBrief(file)) {
+        // Multimodal extraction — get both text and slide images from Modal
+        const res = await fetch("/api/extract-visual", { method: "POST", body: formData });
+        const json = await res.json();
 
-      if (res.ok && json.text) {
-        onChange(json.text);
-        setUploadMsg({ type: "ok", text: `Extracted ${json.text.length.toLocaleString()} chars from ${file.name}` });
+        if (res.ok && json.text) {
+          onChange(json.text);
+          const imgs: string[] = json.images ?? [];
+          setSlideCount(json.slide_count ?? imgs.length);
+          setThumbnails(imgs.slice(0, 3));
+          onImagesExtracted?.(imgs);
+          setUploadMsg({
+            type: "ok",
+            text: `Extracted ${json.text.length.toLocaleString()} chars + ${imgs.length} slide image${imgs.length !== 1 ? "s" : ""} from ${file.name}`,
+          });
+        } else {
+          setUploadMsg({ type: "err", text: json.error || "Extraction failed" });
+        }
       } else {
-        setUploadMsg({ type: "err", text: json.error || "Extraction failed" });
+        // Text-only extraction (DOCX, TXT)
+        const res = await fetch("/api/extract", { method: "POST", body: formData });
+        const json = await res.json();
+
+        if (res.ok && json.text) {
+          onChange(json.text);
+          setUploadMsg({ type: "ok", text: `Extracted ${json.text.length.toLocaleString()} chars from ${file.name}` });
+        } else {
+          setUploadMsg({ type: "err", text: json.error || "Extraction failed" });
+        }
       }
     } catch (err) {
       setUploadMsg({ type: "err", text: String(err) });
@@ -87,40 +116,68 @@ export default function BriefInput({ value, onChange, disabled }: BriefInputProp
       )}
 
       {activeTab === "upload" && (
-        <div
-          className="border-2 border-dashed border-border rounded-xl p-8 text-center hover:border-purple/50 transition-colors cursor-pointer"
-          onClick={() => fileRef.current?.click()}
-        >
-          <input
-            ref={fileRef}
-            type="file"
-            accept=".pdf,.docx,.doc,.txt"
-            onChange={handleFileChange}
-            className="hidden"
-          />
-          {uploading ? (
-            <div className="flex flex-col items-center gap-2">
-              <div className="w-6 h-6 border-2 border-purple border-t-transparent rounded-full animate-spin" />
-              <span className="text-text-dim text-sm">Extracting text...</span>
-            </div>
-          ) : (
-            <div className="flex flex-col items-center gap-2">
-              <span className="text-3xl">📄</span>
-              <p className="text-text-muted text-sm font-medium">
-                Click to upload or drag &amp; drop
+        <div>
+          <div
+            className="border-2 border-dashed border-border rounded-xl p-8 text-center hover:border-purple/50 transition-colors cursor-pointer"
+            onClick={() => fileRef.current?.click()}
+          >
+            <input
+              ref={fileRef}
+              type="file"
+              accept=".pdf,.pptx,.docx,.doc,.txt"
+              onChange={handleFileChange}
+              className="hidden"
+            />
+            {uploading ? (
+              <div className="flex flex-col items-center gap-2">
+                <div className="w-6 h-6 border-2 border-purple border-t-transparent rounded-full animate-spin" />
+                <span className="text-text-dim text-sm">Extracting slides & text…</span>
+              </div>
+            ) : (
+              <div className="flex flex-col items-center gap-2">
+                <span className="text-3xl">📄</span>
+                <p className="text-text-muted text-sm font-medium">
+                  Click to upload or drag &amp; drop
+                </p>
+                <p className="text-text-dim text-xs">
+                  PDF, PPTX <span className="text-purple font-semibold">→ visuals extracted</span> · DOCX, TXT
+                </p>
+              </div>
+            )}
+            {uploadMsg && (
+              <div
+                className={`mt-3 text-xs font-medium px-3 py-2 rounded-lg ${
+                  uploadMsg.type === "ok"
+                    ? "bg-green/15 text-green border border-green/30"
+                    : "bg-red-500/15 text-red-400 border border-red-500/30"
+                }`}
+              >
+                {uploadMsg.text}
+              </div>
+            )}
+          </div>
+
+          {/* Slide thumbnails */}
+          {thumbnails.length > 0 && (
+            <div className="mt-3">
+              <p className="text-xs text-text-dim mb-2 font-medium">
+                👁 {slideCount} slide{slideCount !== 1 ? "s" : ""} extracted — agents will see these visuals
               </p>
-              <p className="text-text-dim text-xs">PDF, DOCX, DOC, TXT</p>
-            </div>
-          )}
-          {uploadMsg && (
-            <div
-              className={`mt-3 text-xs font-medium px-3 py-2 rounded-lg ${
-                uploadMsg.type === "ok"
-                  ? "bg-green/15 text-green border border-green/30"
-                  : "bg-red-500/15 text-red-400 border border-red-500/30"
-              }`}
-            >
-              {uploadMsg.text}
+              <div className="flex gap-2 overflow-x-auto pb-1">
+                {thumbnails.map((b64, i) => (
+                  <img
+                    key={i}
+                    src={`data:image/jpeg;base64,${b64}`}
+                    alt={`Slide ${i + 1}`}
+                    className="h-20 rounded-lg border border-purple/30 shrink-0 object-cover"
+                  />
+                ))}
+                {slideCount > 3 && (
+                  <div className="h-20 w-16 rounded-lg border border-border bg-card flex items-center justify-center shrink-0">
+                    <span className="text-xs text-text-dim font-semibold">+{slideCount - 3}</span>
+                  </div>
+                )}
+              </div>
             </div>
           )}
         </div>

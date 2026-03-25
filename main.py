@@ -27,22 +27,22 @@ def modal_node2(agent: dict) -> dict:
     return node2_generate_snapshot(agent)
 
 @app.function(image=image, secrets=SECRETS, timeout=120)
-def modal_node3(dynamic_agent: dict, campaign_brief: str) -> dict:
-    return node3_mass_session(dynamic_agent, campaign_brief)
+def modal_node3(dynamic_agent: dict, campaign_brief: str, brief_images: list[str] = []) -> dict:
+    return node3_mass_session(dynamic_agent, campaign_brief, brief_images)
 
 @app.function(image=image, secrets=SECRETS, timeout=600)
-def modal_node4(group_reactions: list[dict], campaign_brief: str) -> dict:
-    return node4_breakout_room(group_reactions, campaign_brief)
+def modal_node4(group_reactions: list[dict], campaign_brief: str, brief_images: list[str] = []) -> dict:
+    return node4_breakout_room(group_reactions, campaign_brief, brief_images)
 
 @app.function(image=image, secrets=SECRETS, timeout=1200)
 def modal_node5(mass_reactions: list[dict], breakout_transcripts: list[dict], campaign_brief: str) -> str:
     return node5_synthesis(mass_reactions, breakout_transcripts, campaign_brief)
 
 @app.function(image=image, secrets=SECRETS, timeout=3600)
-def run_pipeline_job(job_id: str, target: str, brief: str, client: str = "", limit: int = 10, group_size: int = 5):
+def run_pipeline_job(job_id: str, target: str, brief: str, client: str = "", limit: int = 10, group_size: int = 5, brief_images: list[str] = []):
     import traceback
     try:
-        result = run_pipeline_core(target, brief, client=client, limit=limit, group_size=group_size)
+        result = run_pipeline_core(target, brief, client=client, limit=limit, group_size=group_size, brief_images=brief_images)
         job_results[job_id] = result
     except Exception as e:
         job_results[job_id] = {"status": "error", "error": str(e), "trace": traceback.format_exc()}
@@ -50,7 +50,7 @@ def run_pipeline_job(job_id: str, target: str, brief: str, client: str = "", lim
 @app.function(image=image, secrets=SECRETS, timeout=3600)
 @modal.asgi_app()
 def fastapi_app():
-    from fastapi import FastAPI
+    from fastapi import FastAPI, UploadFile
     from fastapi.middleware.cors import CORSMiddleware
     from pydantic import BaseModel
     
@@ -63,6 +63,7 @@ def fastapi_app():
         client: str = ""
         limit: int = 10
         group_size: int = 5
+        brief_images: list[str] = []
 
     class SeedRequest(BaseModel):
         demographic: str
@@ -75,7 +76,7 @@ def fastapi_app():
         import uuid as _uuid
         job_id = str(_uuid.uuid4())
         job_results[job_id] = {"status": "running"}
-        run_pipeline_job.spawn(job_id, req.target, req.brief, req.client, req.limit, req.group_size)
+        run_pipeline_job.spawn(job_id, req.target, req.brief, req.client, req.limit, req.group_size, req.brief_images)
         return {"job_id": job_id}
 
     @web_app.get("/job/{job_id}")
@@ -100,6 +101,19 @@ def fastapi_app():
             return {"seeded": len(agents), "demographic": req.demographic, "agents": agents}
         except Exception as e:
             return {"error": str(e), "trace": traceback.format_exc()}
+
+    @web_app.post("/extract-brief")
+    async def api_extract_brief(file: UploadFile):
+        import traceback
+        from fastapi import UploadFile as _UploadFile
+        from src.multimodal import extract_multimodal_brief
+        try:
+            file_bytes = await file.read()
+            ext = (file.filename or "").rsplit(".", 1)[-1].lower()
+            result = extract_multimodal_brief(file_bytes, ext)
+            return result
+        except Exception as e:
+            return {"error": str(e), "trace": traceback.format_exc(), "text": "", "images": [], "slide_count": 0}
 
     @web_app.get("/agents")
     def api_agents(demographic: str = "", limit: int = 50):
@@ -156,20 +170,22 @@ def node1_intake_and_query(target_demographic: str, limit: int = 10) -> list[dic
     selected = random.sample(pool_result.data, min(limit, len(pool_result.data)))
     return selected
 
-def run_pipeline_core(target: str, brief: str, client: str = "", limit: int = 10, group_size: int = 5):
+def run_pipeline_core(target: str, brief: str, client: str = "", limit: int = 10, group_size: int = 5, brief_images: list[str] = []):
     print(f"\n{DIVIDER}\n  PANTHEON Orchestrator\n{DIVIDER}")
-    
+    if brief_images:
+        print(f"  Multimodal: {len(brief_images)} slide image(s) attached")
+
     agents = node1_intake_and_query(target, limit)
     if not agents: return {"error": "No agents found"}
 
     dynamic_agents = list(modal_node2.map(agents))
-    mass_reactions = list(modal_node3.starmap([(da, brief) for da in dynamic_agents]))
-    
+    mass_reactions = list(modal_node3.starmap([(da, brief, brief_images) for da in dynamic_agents]))
+
     groups = [mass_reactions[i:i+group_size] for i in range(0, len(mass_reactions), group_size)]
-    transcripts = list(modal_node4.starmap([(g, brief) for g in groups]))
-    
+    transcripts = list(modal_node4.starmap([(g, brief, brief_images) for g in groups]))
+
     report = modal_node5.remote(mass_reactions, transcripts, brief)
-    
+
     md_path, base_name = _save_report(report, target, brief, client)
     _save_presentation(md_path, base_name, target, brief, client)
     _run_client_whisperer(md_path, base_name, target, brief, client)

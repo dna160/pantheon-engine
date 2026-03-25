@@ -5,11 +5,16 @@ from src.utils import _build_agent_context
 def get_image():
     return (
         modal.Image.debian_slim(python_version="3.11")
+        .apt_install("poppler-utils", "libreoffice")
         .pip_install(
             "supabase>=2.0.0",
             "anthropic>=0.50.0",
             "fastapi[standard]>=0.115.0",
             "pydantic>=2.4.0",
+            "PyMuPDF>=1.24.0",
+            "python-pptx>=1.0.0",
+            "Pillow>=10.0.0",
+            "python-multipart>=0.0.9",
         )
         .add_local_python_source("src", copy=True)
     )

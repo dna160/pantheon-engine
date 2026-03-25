@@ -19,6 +19,7 @@ export default function Home() {
   const [agentLimit, setAgentLimit] = useState(10);
   const [groupSize, setGroupSize]   = useState(5);
   const [brief, setBrief] = useState("");
+  const [briefImages, setBriefImages] = useState<string[]>([]);
 
   // ── Pipeline state ──────────────────────────────────────────────────────────
   const [phase, setPhase]         = useState<Phase>("idle");
@@ -110,7 +111,7 @@ export default function Home() {
 
     try {
       const result = await runPipeline(
-        { brief, target, client: clientName, limit: agentLimit, groupSize },
+        { brief, target, client: clientName, limit: agentLimit, groupSize, briefImages },
         abortRef.current.signal
       );
 
@@ -216,7 +217,7 @@ export default function Home() {
 
           {/* ── Brief Input ── */}
           <div className="mb-8">
-            <BriefInput value={brief} onChange={setBrief} disabled={isRunning} />
+            <BriefInput value={brief} onChange={setBrief} onImagesExtracted={setBriefImages} disabled={isRunning} />
           </div>
 
           <hr className="border-border mb-8" />
@@ -280,6 +281,25 @@ export default function Home() {
                 isRunning={isRunning}
                 elapsedSeconds={elapsed}
               />
+              {/* Slide thumbnails — shown while broadcasting to agents */}
+              {isRunning && briefImages.length > 0 && (
+                <div className="mt-5 pt-5 border-t border-border">
+                  <p className="text-xs text-text-dim font-semibold uppercase tracking-widest mb-3">
+                    👁 Broadcasting {briefImages.length} visual slide{briefImages.length !== 1 ? "s" : ""} to agents
+                  </p>
+                  <div className="flex gap-2 overflow-x-auto pb-1">
+                    {briefImages.slice(0, 6).map((b64, i) => (
+                      <img
+                        key={i}
+                        src={`data:image/jpeg;base64,${b64}`}
+                        alt={`Slide ${i + 1}`}
+                        className="h-16 rounded-lg border border-purple/40 shrink-0 object-cover opacity-80 animate-pulse"
+                        style={{ animationDelay: `${i * 150}ms` }}
+                      />
+                    ))}
+                  </div>
+                </div>
+              )}
             </div>
           )}
 

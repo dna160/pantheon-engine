@@ -14,6 +14,7 @@ export async function runPipeline(
       client: config.client,
       limit: config.limit,
       group_size: config.groupSize,
+      brief_images: config.briefImages ?? [],
     }),
     signal,
   });

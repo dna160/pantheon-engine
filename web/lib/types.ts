@@ -4,6 +4,7 @@ export interface PipelineConfig {
   client: string;
   limit: number;
   groupSize: number;
+  briefImages?: string[];
 }
 
 export interface PipelineResult {
