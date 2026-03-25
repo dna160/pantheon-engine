@@ -22,7 +22,16 @@ export async function POST(req: NextRequest) {
       signal: AbortSignal.timeout(115_000),
     });
 
-    const data = await upstream.json();
+    const text = await upstream.text();
+    let data: unknown;
+    try {
+      data = JSON.parse(text);
+    } catch {
+      return NextResponse.json(
+        { error: `Modal error (${upstream.status}): ${text.slice(0, 300)}`, text: "", images: [], slide_count: 0 },
+        { status: upstream.status || 500 }
+      );
+    }
     return NextResponse.json(data, { status: upstream.status });
   } catch (err: unknown) {
     console.error("[extract-visual]", err);
