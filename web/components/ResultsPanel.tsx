@@ -16,6 +16,7 @@ export default function ResultsPanel({ report, elapsed, client, target, brief = 
   const [copied, setCopied] = useState(false);
   const [downloadingDocx, setDownloadingDocx] = useState(false);
   const [downloadingPptx, setDownloadingPptx] = useState(false);
+  const [downloadingWhisperer, setDownloadingWhisperer] = useState(false);
 
   const elapsedStr = elapsed >= 60
     ? `${Math.floor(elapsed / 60)}m ${elapsed % 60}s`
@@ -59,6 +60,29 @@ export default function ResultsPanel({ report, elapsed, client, target, brief = 
       alert("Failed to generate Word document: " + (e instanceof Error ? e.message : e));
     } finally {
       setDownloadingDocx(false);
+    }
+  }
+
+  async function handleDownloadWhisperer() {
+    setDownloadingWhisperer(true);
+    try {
+      const res = await fetch("/api/download/whisperer", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ report, target, client, brief }),
+      });
+      if (!res.ok) throw new Error(await res.text());
+      const blob = await res.blob();
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = `PANTHEON_ClientWhisperer_${slug}.docx`;
+      a.click();
+      URL.revokeObjectURL(url);
+    } catch (e) {
+      alert("Failed to generate Client Whisperer doc: " + (e instanceof Error ? e.message : e));
+    } finally {
+      setDownloadingWhisperer(false);
     }
   }
 
@@ -134,6 +158,18 @@ export default function ResultsPanel({ report, elapsed, client, target, brief = 
                 Building…
               </span>
             ) : "↓ Slides .pptx"}
+          </button>
+          <button
+            onClick={handleDownloadWhisperer}
+            disabled={downloadingWhisperer}
+            className="px-3 py-1.5 text-xs font-semibold rounded-lg bg-amber-500/15 border border-amber-500/30 text-amber-400 hover:bg-amber-500/25 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+          >
+            {downloadingWhisperer ? (
+              <span className="flex items-center gap-1">
+                <span className="w-3 h-3 border border-amber-400 border-t-transparent rounded-full animate-spin" />
+                Building…
+              </span>
+            ) : "↓ Whisperer .docx"}
           </button>
         </div>
       </div>
