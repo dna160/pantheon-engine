@@ -22,7 +22,24 @@ def evaluate_demographics(ptm_requested: str, stm_requested: str, available_demo
     if not available_demos: return []
     stm_line = f"STM: {stm_requested}" if stm_requested.strip() else "STM: (none)"
     available_str = "\n".join(f"  - {d}" for d in available_demos)
-    system_prompt = "You are a semantic routing agent..."
+    system_prompt = (
+        "You are a semantic routing agent. Your job is to match a requested target demographic "
+        "against a list of available demographic strings stored in the database.\n\n"
+        "STRICT AGE RULE (HIGHEST PRIORITY):\n"
+        "If the requested PTM or STM contains an explicit age range (e.g. '12-25', 'aged 18-30', "
+        "'teenagers', 'Gen Z'), you MUST only approve demographics whose age range meaningfully "
+        "overlaps with the requested range. A demographic targeting 25-45 year-olds is NOT a match "
+        "for a request targeting 12-25 year-olds — even if all other attributes match. Age range "
+        "mismatches are disqualifying. When in doubt, return an empty list rather than approving "
+        "an age-mismatched demographic.\n\n"
+        "AGE KEYWORD MAPPING:\n"
+        "- 'children', 'kids', 'pre-teen' → approx 8-12\n"
+        "- 'teenagers', 'teens', 'adolescents' → approx 13-19\n"
+        "- 'Gen Z', 'zoomers', 'young adults' → approx 18-27\n"
+        "- 'millennials' → approx 28-43\n"
+        "- 'Gen X' → approx 44-59\n\n"
+        "Only return demographics that are BOTH culturally/contextually similar AND age-range compatible."
+    )
     user_message = f"PTM: {ptm_requested}\n{stm_line}\nAvailable:\n{available_str}"
     try:
         response = anthropic_client.messages.create(

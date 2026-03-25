@@ -136,6 +136,24 @@ def fastapi_app():
 
     return web_app
 
+def _parse_age_range(demographic: str) -> tuple | None:
+    """Extract (age_min, age_max) from a demographic string, or return None if not found."""
+    m = re.search(r"(\d{1,3})\s*[-\u2013]\s*(\d{1,3})", demographic)
+    if m:
+        lo, hi = int(m.group(1)), int(m.group(2))
+        if 5 <= lo < hi <= 100:
+            return lo, hi
+    # Keyword fallbacks
+    s = demographic.lower()
+    if any(k in s for k in ("teen", "adolescen", "secondary school")):
+        return 13, 19
+    if any(k in s for k in ("gen z", "zoomer", "young adult")):
+        return 18, 27
+    if any(k in s for k in ("children", "kids", "pre-teen")):
+        return 8, 12
+    return None
+
+
 def node1_intake_and_query(target_demographic: str, limit: int = 10) -> list[dict]:
     from dotenv import load_dotenv
     from supabase import create_client
@@ -149,24 +167,36 @@ def node1_intake_and_query(target_demographic: str, limit: int = 10) -> list[dic
     ptm = parts[0] if parts else target_demographic
     stm = parts[1] if len(parts) >= 2 else ""
 
+    # Honour explicit age range from PTM string throughout the pipeline
+    age_bounds = _parse_age_range(ptm)
+    age_min, age_max = age_bounds if age_bounds else (None, None)
+
     unique_result = sb.table("agent_genomes").select("target_demographic").execute()
     available_demos = sorted(set(
         row["target_demographic"] for row in unique_result.data
         if row["target_demographic"] is not None
     ))
-    
+
     approved_demos = evaluate_demographics(ptm, stm, available_demos, ac)
     for d in (ptm, stm):
         if d and d not in approved_demos: approved_demos.append(d)
 
-    count_result = sb.table("agent_genomes").select("id", count="exact").in_("target_demographic", approved_demos).execute()
-    existing_count = count_result.count or 0
-    
+    # Count agents matching BOTH demographic AND age range
+    count_q = sb.table("agent_genomes").select("id", count="exact").in_("target_demographic", approved_demos)
+    if age_min is not None:
+        count_q = count_q.gte("age", age_min).lte("age", age_max)
+    existing_count = (count_q.execute().count) or 0
+
     deficit = limit - existing_count
     if deficit > 0:
-        dynamic_seed_agents(ptm, deficit, sb, ac)
+        # Seed with the correct age range so new agents match the request
+        dynamic_seed_agents(ptm, deficit, sb, ac, age_min=age_min, age_max=age_max)
 
-    pool_result = sb.table("agent_genomes").select("*").in_("target_demographic", approved_demos).limit(500).execute()
+    # Pull pool filtered by age range when one is specified
+    pool_q = sb.table("agent_genomes").select("*").in_("target_demographic", approved_demos)
+    if age_min is not None:
+        pool_q = pool_q.gte("age", age_min).lte("age", age_max)
+    pool_result = pool_q.limit(500).execute()
     selected = random.sample(pool_result.data, min(limit, len(pool_result.data)))
     return selected
 
