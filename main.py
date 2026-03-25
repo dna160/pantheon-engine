@@ -2,6 +2,7 @@
 main.py — PANTHEON Execution Engine (Modal Orchestrator)
 """
 import os
+import re
 import json
 import random
 import modal
