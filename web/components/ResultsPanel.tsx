@@ -9,14 +9,19 @@ interface ResultsPanelProps {
   elapsed: number;
   client: string;
   target: string;
+  brief?: string;
 }
 
-export default function ResultsPanel({ report, elapsed, client, target }: ResultsPanelProps) {
+export default function ResultsPanel({ report, elapsed, client, target, brief = "" }: ResultsPanelProps) {
   const [copied, setCopied] = useState(false);
+  const [downloadingDocx, setDownloadingDocx] = useState(false);
+  const [downloadingPptx, setDownloadingPptx] = useState(false);
 
   const elapsedStr = elapsed >= 60
     ? `${Math.floor(elapsed / 60)}m ${elapsed % 60}s`
     : `${elapsed}s`;
+
+  const slug = (client || target).replace(/[^\w]/g, "_").slice(0, 40);
 
   function handleCopy() {
     navigator.clipboard.writeText(report);
@@ -24,15 +29,60 @@ export default function ResultsPanel({ report, elapsed, client, target }: Result
     setTimeout(() => setCopied(false), 2000);
   }
 
-  function handleDownload() {
+  function handleDownloadMd() {
     const blob = new Blob([report], { type: "text/markdown" });
     const url = URL.createObjectURL(blob);
     const a = document.createElement("a");
-    const slug = (client || target).replace(/[^\w]/g, "_").slice(0, 40);
     a.href = url;
-    a.download = `PANTHEON_Report_${slug}_${Date.now()}.md`;
+    a.download = `PANTHEON_Report_${slug}.md`;
     a.click();
     URL.revokeObjectURL(url);
+  }
+
+  async function handleDownloadDocx() {
+    setDownloadingDocx(true);
+    try {
+      const res = await fetch("/api/download/docx", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ report, target, client, brief }),
+      });
+      if (!res.ok) throw new Error(await res.text());
+      const blob = await res.blob();
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = `PANTHEON_Report_${slug}.docx`;
+      a.click();
+      URL.revokeObjectURL(url);
+    } catch (e) {
+      alert("Failed to generate Word document: " + (e instanceof Error ? e.message : e));
+    } finally {
+      setDownloadingDocx(false);
+    }
+  }
+
+  async function handleDownloadPptx() {
+    setDownloadingPptx(true);
+    try {
+      const res = await fetch("/api/download/pptx", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ report, target, client, brief }),
+      });
+      if (!res.ok) throw new Error(await res.text());
+      const blob = await res.blob();
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = `PANTHEON_Report_${slug}.pptx`;
+      a.click();
+      URL.revokeObjectURL(url);
+    } catch (e) {
+      alert("Failed to generate PowerPoint: " + (e instanceof Error ? e.message : e));
+    } finally {
+      setDownloadingPptx(false);
+    }
   }
 
   return (
@@ -48,7 +98,7 @@ export default function ResultsPanel({ report, elapsed, client, target }: Result
             {target} · Completed in {elapsedStr}
           </p>
         </div>
-        <div className="flex gap-2">
+        <div className="flex flex-wrap gap-2 justify-end">
           <button
             onClick={handleCopy}
             className="px-3 py-1.5 text-xs font-semibold rounded-lg border border-border text-text-muted hover:border-purple hover:text-purple transition-colors"
@@ -56,10 +106,34 @@ export default function ResultsPanel({ report, elapsed, client, target }: Result
             {copied ? "✓ Copied" : "Copy MD"}
           </button>
           <button
-            onClick={handleDownload}
-            className="px-3 py-1.5 text-xs font-semibold rounded-lg bg-green/15 border border-green/30 text-green hover:bg-green/25 transition-colors"
+            onClick={handleDownloadMd}
+            className="px-3 py-1.5 text-xs font-semibold rounded-lg border border-border text-text-muted hover:border-green hover:text-green transition-colors"
           >
-            ↓ Download .md
+            ↓ .md
+          </button>
+          <button
+            onClick={handleDownloadDocx}
+            disabled={downloadingDocx}
+            className="px-3 py-1.5 text-xs font-semibold rounded-lg bg-blue-500/15 border border-blue-500/30 text-blue-400 hover:bg-blue-500/25 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+          >
+            {downloadingDocx ? (
+              <span className="flex items-center gap-1">
+                <span className="w-3 h-3 border border-blue-400 border-t-transparent rounded-full animate-spin" />
+                Building…
+              </span>
+            ) : "↓ Word .docx"}
+          </button>
+          <button
+            onClick={handleDownloadPptx}
+            disabled={downloadingPptx}
+            className="px-3 py-1.5 text-xs font-semibold rounded-lg bg-orange-500/15 border border-orange-500/30 text-orange-400 hover:bg-orange-500/25 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+          >
+            {downloadingPptx ? (
+              <span className="flex items-center gap-1">
+                <span className="w-3 h-3 border border-orange-400 border-t-transparent rounded-full animate-spin" />
+                Building…
+              </span>
+            ) : "↓ Slides .pptx"}
           </button>
         </div>
       </div>

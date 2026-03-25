@@ -291,6 +291,7 @@ export default function Home() {
                 elapsed={elapsed}
                 client={clientName}
                 target={ptm}
+                brief={brief}
               />
             </div>
           )}
