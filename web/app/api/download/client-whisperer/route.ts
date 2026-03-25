@@ -32,7 +32,7 @@ import Anthropic from "@anthropic-ai/sdk";
 import { Document, Packer, Paragraph, TextRun, HeadingLevel } from "docx";
 
 export const runtime = "nodejs";
-export const maxDuration = 60;
+export const maxDuration = 120;
 
 // ─── System Prompt ────────────────────────────────────────────────────────────
 // This prompt governs the Claude API call that generates the meeting prep doc.
@@ -274,7 +274,7 @@ export async function POST(req: NextRequest) {
 
     const ac = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY });
     const resp = await ac.messages.create({
-      model: "claude-haiku-4-5",
+      model: "claude-sonnet-4-5",
       max_tokens: 4096,
       system: CLIENT_WHISPERER_SYSTEM,
       messages: [{
