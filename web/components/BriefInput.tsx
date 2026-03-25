@@ -22,9 +22,31 @@ export default function BriefInput({ value, onChange, onImagesExtracted, disable
   const isVisualBrief = (file: File) =>
     file.name.toLowerCase().endsWith(".pdf") || file.name.toLowerCase().endsWith(".pptx");
 
+  // Safe JSON parser — handles plain-text error responses (e.g. Vercel 413, Modal errors)
+  async function safeJson(res: Response): Promise<{ ok: boolean; data: Record<string, unknown>; errorText: string }> {
+    const text = await res.text();
+    try {
+      return { ok: res.ok, data: JSON.parse(text), errorText: "" };
+    } catch {
+      // Server returned non-JSON (e.g. "Request Entity Too Large" from Vercel/Modal)
+      const hint = res.status === 413
+        ? "File is too large for the server to accept."
+        : text.slice(0, 200) || `Server error (${res.status})`;
+      return { ok: false, data: {}, errorText: hint };
+    }
+  }
+
   async function handleFileChange(e: React.ChangeEvent<HTMLInputElement>) {
     const file = e.target.files?.[0];
     if (!file) return;
+
+    // Client-side size guard — Vercel serverless limit is ~4.5 MB on Hobby, higher on Pro
+    const MAX_MB = 50;
+    if (file.size > MAX_MB * 1024 * 1024) {
+      setUploadMsg({ type: "err", text: `File too large (${(file.size / 1024 / 1024).toFixed(1)} MB). Maximum is ${MAX_MB} MB.` });
+      if (fileRef.current) fileRef.current.value = "";
+      return;
+    }
 
     setUploading(true);
     setUploadMsg(null);
@@ -39,35 +61,35 @@ export default function BriefInput({ value, onChange, onImagesExtracted, disable
       if (isVisualBrief(file)) {
         // Multimodal extraction — get both text and slide images from Modal
         const res = await fetch("/api/extract-visual", { method: "POST", body: formData });
-        const json = await res.json();
+        const { ok, data, errorText } = await safeJson(res);
 
-        if (res.ok && json.text) {
-          onChange(json.text);
-          const imgs: string[] = json.images ?? [];
-          setSlideCount(json.slide_count ?? imgs.length);
+        if (ok && data.text) {
+          onChange(data.text as string);
+          const imgs: string[] = (data.images as string[]) ?? [];
+          setSlideCount((data.slide_count as number) ?? imgs.length);
           setThumbnails(imgs.slice(0, 3));
           onImagesExtracted?.(imgs);
           setUploadMsg({
             type: "ok",
-            text: `Extracted ${json.text.length.toLocaleString()} chars + ${imgs.length} slide image${imgs.length !== 1 ? "s" : ""} from ${file.name}`,
+            text: `Extracted ${(data.text as string).length.toLocaleString()} chars + ${imgs.length} slide image${imgs.length !== 1 ? "s" : ""} from ${file.name}`,
           });
         } else {
-          setUploadMsg({ type: "err", text: json.error || "Extraction failed" });
+          setUploadMsg({ type: "err", text: errorText || (data.error as string) || "Extraction failed" });
         }
       } else {
         // Text-only extraction (DOCX, TXT)
         const res = await fetch("/api/extract", { method: "POST", body: formData });
-        const json = await res.json();
+        const { ok, data, errorText } = await safeJson(res);
 
-        if (res.ok && json.text) {
-          onChange(json.text);
-          setUploadMsg({ type: "ok", text: `Extracted ${json.text.length.toLocaleString()} chars from ${file.name}` });
+        if (ok && data.text) {
+          onChange(data.text as string);
+          setUploadMsg({ type: "ok", text: `Extracted ${(data.text as string).length.toLocaleString()} chars from ${file.name}` });
         } else {
-          setUploadMsg({ type: "err", text: json.error || "Extraction failed" });
+          setUploadMsg({ type: "err", text: errorText || (data.error as string) || "Extraction failed" });
         }
       }
     } catch (err) {
-      setUploadMsg({ type: "err", text: String(err) });
+      setUploadMsg({ type: "err", text: err instanceof Error ? err.message : String(err) });
     } finally {
       setUploading(false);
       if (fileRef.current) fileRef.current.value = "";
