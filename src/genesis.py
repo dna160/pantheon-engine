@@ -812,12 +812,15 @@ Life stages (calibrate to age {age}):
 # PUBLIC ENTRY POINT
 # ─────────────────────────────────────────────────────────────────────────────
 def dynamic_seed_agents(
-    demographic: str, count: int, sb, anthropic_client
+    demographic: str, count: int, sb, anthropic_client,
+    age_min: int | None = None, age_max: int | None = None,
 ) -> list[dict]:
-    age_match = re.search(r"(\d+)[^\d]+(\d+)", demographic)
-    age_min, age_max = (
-        (int(age_match.group(1)), int(age_match.group(2))) if age_match else (25, 45)
-    )
+    # Explicit age bounds take priority; fall back to regex extraction from demographic string
+    if age_min is None or age_max is None:
+        age_match = re.search(r"(\d+)[^\d]+(\d+)", demographic)
+        age_min, age_max = (
+            (int(age_match.group(1)), int(age_match.group(2))) if age_match else (25, 45)
+        )
 
     # Lock city to whatever is explicitly mentioned in the demographic.
     pinned_city = _extract_city(demographic)

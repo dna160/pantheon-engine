@@ -96,7 +96,7 @@ def fastapi_app():
         try:
             sb = create_client(os.environ["SUPABASE_URL"], os.environ["SUPABASE_SERVICE_ROLE_KEY"])
             ac = _anthropic.Anthropic(api_key=os.environ["ANTHROPIC_API_KEY"])
-            agents = dynamic_seed_agents(req.demographic, req.count, sb, ac)
+            agents = dynamic_seed_agents(req.demographic, req.count, sb, ac, age_min=req.age_min, age_max=req.age_max)
             return {"seeded": len(agents), "demographic": req.demographic, "agents": agents}
         except Exception as e:
             return {"error": str(e), "trace": traceback.format_exc()}

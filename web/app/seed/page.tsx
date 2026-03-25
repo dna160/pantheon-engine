@@ -194,8 +194,8 @@ function AgentCard({ agent, isNew }: { agent: Agent; isNew: boolean }) {
 export default function SeedPage() {
   const [demographic, setDemographic] = useState("Medanese Upper Middle Class, 25-45");
   const [count, setCount] = useState(10);
-  const [ageMin, setAgeMin] = useState(25);
-  const [ageMax, setAgeMax] = useState(45);
+  const [ageMin, setAgeMin] = useState(18);
+  const [ageMax, setAgeMax] = useState(35);
   const [filterQuery, setFilterQuery] = useState("");
 
   const [phase, setPhase] = useState<Phase>("idle");
@@ -372,7 +372,7 @@ export default function SeedPage() {
                   <div className="flex-1">
                     <input
                       type="number"
-                      min={18}
+                      min={10}
                       max={ageMax - 1}
                       value={ageMin}
                       onChange={(e) => setAgeMin(Number(e.target.value))}
