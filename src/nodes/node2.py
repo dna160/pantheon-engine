@@ -11,6 +11,7 @@ def get_image():
             "fastapi[standard]>=0.115.0",
             "pydantic>=2.4.0",
         )
+        .add_local_python_source("src", copy=True)
     )
 
 SECRETS = [modal.Secret.from_name("pantheon-secrets")]
