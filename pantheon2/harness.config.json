@@ -1,0 +1,39 @@
+{
+  "_comment": "Pantheon 2.0 Harness Configuration. Edit provider/model to swap LLMs. Never commit API keys here.",
+  "zone1": {
+    "provider": "anthropic",
+    "model": "claude-sonnet-4-6",
+    "max_tokens": 2000,
+    "temperature": 0.3,
+    "skill_ref": "skills/harness-orchestrator/prompts/zone1_cache_builder.txt"
+  },
+  "zone2": {
+    "slm_model_path": "./models/phi-3-mini-4k-instruct-q4_k_m.gguf",
+    "slm_backend": "llama_cpp",
+    "slm_max_tokens": 150,
+    "slm_timeout_ms": 350,
+    "fallback_to_cache": true,
+    "cache_path": "./session_cache/dialog_cache.json"
+  },
+  "zone3": {
+    "provider": "anthropic",
+    "model": "claude-sonnet-4-6",
+    "max_tokens": 3000,
+    "temperature": 0.4,
+    "skill_ref": "skills/harness-orchestrator/prompts/zone3_session_analyzer.txt"
+  },
+  "psych_review": {
+    "provider": "anthropic",
+    "model": "claude-sonnet-4-6",
+    "max_tokens": 1500,
+    "temperature": 0.2,
+    "validity_prompt_ref": "skills/adversarial-psychologist/prompts/validity_review.txt",
+    "ecological_prompt_ref": "skills/adversarial-psychologist/prompts/ecological_validity_review.txt"
+  },
+  "supported_providers": {
+    "anthropic": "Use ANTHROPIC_API_KEY from .env",
+    "openai": "Use OPENAI_API_KEY from .env",
+    "gemini": "Use GEMINI_API_KEY from .env",
+    "lmstudio": "Set model to LM Studio server URL, e.g. http://localhost:1234/v1 — uses OpenAI-compatible endpoint, no API key required"
+  }
+}

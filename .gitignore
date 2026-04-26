@@ -4,6 +4,7 @@ __pycache__/
 .gemini/
 .claude/
 .env
+*.env
 pantheon.env
 out.txt
 out2.txt
@@ -12,3 +13,4 @@ Usersjohnsjcodemunch-mcp/
 jcodemunch-mcp/
 node_modules/
 .DS_Store
+pantheonv2-guide-implementation/
